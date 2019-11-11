@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>choreonoid_ros</name>
+  <version>0.0.0</version>
+  <description>The package for using Choreonoid as a ROS node</description>
+  <maintainer email="s.nakaoka@choreonoid.co.jp">Shin'ichiro Nakaoka</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>choreonoid</build_depend>
+  <exec_depend>choreonoid</exec_depend>
+</package>

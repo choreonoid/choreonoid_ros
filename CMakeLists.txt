@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5.0)
 project(choreonoid_ros)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -6,21 +6,22 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 find_package(catkin REQUIRED COMPONENTS
-  #roscpp
-  #std_msgs
-  #sensor_msgs
+  roscpp
+  std_msgs
+  sensor_msgs
+  image_transport
   choreonoid
   )
 
-#find_package(Qt5 COMPONENTS Widgets REQUIRED)
+# find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
-catkin_package()
+catkin_package(SKIP_CMAKE_CONFIG_GENERATION SKIP_PKG_CONFIG_GENERATION)
 
 if(CHOREONOID_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD ${CHOREONOID_CXX_STANDARD})
   set(CMAKE_CXX_EXTENSIONS OFF)
 else()
-  add_compile_options(-std=c++11)
+  add_compile_options(-std=c++14)
 endif()
 
 add_definitions(${CHOREONOID_DEFINITIONS})

@@ -1,0 +1,5 @@
+set(target choreonoid_ros)
+add_executable(${target} choreonoid_ros.cpp)
+set_target_properties(${target} PROPERTIES OUTPUT_NAME choreonoid)
+target_link_libraries(${target} ${CHOREONOID_BASE_LIBRARIES})
+install(TARGETS ${target} RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

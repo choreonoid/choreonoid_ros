@@ -1,0 +1,5 @@
+set(target CnoidROSUtil)
+add_library(${target} ROSUtil.cpp)
+target_link_libraries(${target} ${CHOREONOID_UTIL_LIBRARIES})
+set_target_properties(${target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_PACKAGE_LIB_DESTINATION})
+install(TARGETS ${target} LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

@@ -1,4 +1,5 @@
 #include "BodyPublisherItem.h"
+#include "../util/ROSUtil.h"
 #include <cnoid/Plugin>
 #include <cnoid/MessageView>
 #include <ros/init.h>
@@ -19,10 +20,10 @@ public:
   
     virtual bool initialize()
     {
-        int argc = 0;
-        char** argv = 0;
-
         if(!ros::isInitialized()){
+            auto& args = rosInitArguments();
+            int argc = args.size();
+            char** argv = &args.front();
             ros::init(argc, argv, "choreonoid", ros::init_options::NoSigintHandler);
         }
 

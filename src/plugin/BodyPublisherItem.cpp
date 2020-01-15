@@ -5,6 +5,7 @@
 #include <cnoid/TimeBar>
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
+#include <cnoid/PutPropertyFunction>
 #include <ros/node_handle.h>
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/image_encodings.h>

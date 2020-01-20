@@ -18,12 +18,6 @@ target_link_libraries(${target}
   # Qt5::Widgets
   )
 
-set(plugin_dir ${CATKIN_PACKAGE_BIN_DESTINATION}/${CHOREONOID_VERSION_SUBDIR})
-set_target_properties(${target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${plugin_dir})
-install(TARGETS ${target} LIBRARY DESTINATION ${plugin_dir})
-
 if(CHOREONOID_ENABLE_PYTHON)
-  if(CHOREONOID_USE_PYBIND11)
-    add_subdirectory(pybind11)
-  endif()
+  add_subdirectory(pybind11)
 endif()

@@ -13,7 +13,7 @@ target_link_libraries(${target}
   ${std_msgs_LIBRARIES}
   ${sensor_msgs_LIBRARIES}
   ${image_transport_LIBRARIES}
-  ${CHOREONOID_BASE_LIBRARIES}
+  ${CHOREONOID_BODY_PLUGIN_LIBRARIES}
   CnoidROSUtil
   # Qt5::Widgets
   )

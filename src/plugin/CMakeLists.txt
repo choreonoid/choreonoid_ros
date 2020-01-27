@@ -15,7 +15,6 @@ target_link_libraries(${target}
   ${image_transport_LIBRARIES}
   ${CHOREONOID_BODY_PLUGIN_LIBRARIES}
   CnoidROSUtil
-  # Qt5::Widgets
   )
 
 if(CHOREONOID_ENABLE_PYTHON)

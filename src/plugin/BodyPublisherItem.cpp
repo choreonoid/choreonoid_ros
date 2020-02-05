@@ -76,9 +76,9 @@ public:
 }
 
 
-void BodyPublisherItem::initialize(ExtensionManager* ext)
+void BodyPublisherItem::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<BodyPublisherItem>("BodyPublisherItem");
+    ext->itemManager().registerClass<BodyPublisherItem>(N_("BodyPublisherItem"));
     ext->itemManager().addCreationPanel<BodyPublisherItem>();
 }
 

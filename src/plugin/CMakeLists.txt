@@ -4,6 +4,7 @@ choreonoid_make_gettext_mo_files(${target} mofiles)
 
 choreonoid_add_plugin(${target}
   ROSPlugin.cpp
+  WorldROSItem.cpp
   BodyPublisherItem.cpp
   ${mofiles}
   )

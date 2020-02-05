@@ -1,3 +1,4 @@
+#include "WorldROSItem.h"
 #include "BodyPublisherItem.h"
 #include "../util/ROSUtil.h"
 #include <cnoid/Plugin>
@@ -36,7 +37,8 @@ public:
         spinner.reset(new ros::AsyncSpinner(0));
         spinner->start();
 
-        BodyPublisherItem::initialize(this);
+        WorldROSItem::initializeClass(this);
+        BodyPublisherItem::initializeClass(this);
         
         return true;
     }

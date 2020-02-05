@@ -11,7 +11,7 @@ class BodyPublisherItemImpl;
 class CNOID_EXPORT BodyPublisherItem : public ControllerItem
 {
 public:
-    static void initialize(ExtensionManager* ext);
+    static void initializeClass(ExtensionManager* ext);
 
     BodyPublisherItem();
     BodyPublisherItem(const BodyPublisherItem& org);

@@ -43,6 +43,7 @@ public:
     ~Impl();
     void initialize();
     void initializeWorld(WorldItem* worldItem);
+    void initializeClockPublisher();
     void clearWorld();
     void onSimulationAboutToStart(SimulatorItem* simulatorItem);
     void setCurrentSimulatorItem(SimulatorItem* simulatorItem);
@@ -120,20 +121,16 @@ Item* WorldROSItem::doDuplicate() const
 
 void WorldROSItem::onPositionChanged()
 {
-    auto worldItem = findOwnerItem<WorldItem>();
-    if(worldItem){
-        if(worldItem != impl->worldItem){
+    WorldItem* worldItem = nullptr;
+    if(isConnectedToRoot()){
+        worldItem = findOwnerItem<WorldItem>();
+        if(worldItem && worldItem != impl->worldItem){
             impl->initializeWorld(worldItem);
         }
-    } else {
+    }
+    if(!worldItem){
         impl->clearWorld();
     }
-}
-
-
-void WorldROSItem::onDisconnectedFromRoot()
-{
-    impl->clearWorld();
 }
 
 
@@ -146,14 +143,35 @@ void WorldROSItem::Impl::initializeWorld(WorldItem* worldItem)
     string name = worldItem->name();
     std::replace(name.begin(), name.end(), '-', '_');
     rosNode.reset(new ros::NodeHandle(name));
+    
+    initializeClockPublisher();
+}
 
-    clockPublisher = rosNode->advertise<rosgraph_msgs::Clock>("/clock", 1);
+
+void WorldROSItem::Impl::initializeClockPublisher()
+{
+    if(rosNode){
+        clockPublisher.shutdown();
+        if(maxClockPublishingRate > 0.0){
+            clockPublisher = rosNode->advertise<rosgraph_msgs::Clock>("/clock", 1);
+        }
+    }
+}
+
+
+void WorldROSItem::setMaxClockPublishingRate(double rate)
+{
+    impl->maxClockPublishingRate = rate;
+    impl->initializeClockPublisher();
 }
 
 
 void WorldROSItem::Impl::clearWorld()
 {
-    rosNode.reset();
+    if(rosNode){
+        rosNode.reset();
+        clockPublisher.shutdown();
+    }
 }
 
 
@@ -217,9 +235,9 @@ void WorldROSItem::Impl::onSimulationStep()
 
 void WorldROSItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-  putProperty.decimals(2).min(0.0)
-      (_("Max clock publishing rate"), impl->maxClockPublishingRate,
-       [&](double v){ impl->maxClockPublishingRate = v; return true; });
+    putProperty.decimals(2).min(0.0)
+        (_("Max clock publishing rate"), impl->maxClockPublishingRate,
+         [&](double r){ setMaxClockPublishingRate(r); return true; });
 }
 
 

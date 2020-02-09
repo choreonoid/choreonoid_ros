@@ -13,11 +13,11 @@ public:
     WorldROSItem();
     WorldROSItem(const WorldROSItem& org);
     virtual ~WorldROSItem();
+    void setMaxClockPublishingRate(double rate);
 
 protected:
     virtual Item* doDuplicate() const override;
     virtual void onPositionChanged() override;
-    virtual void onDisconnectedFromRoot() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;

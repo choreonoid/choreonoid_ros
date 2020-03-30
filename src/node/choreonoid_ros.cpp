@@ -53,7 +53,7 @@ int main(int argc, char** argv)
         pluginPathList = string(pluginPathVariable) + PATH_DELIMITER + rosPluginPath;
     }
 
-    app.initialize("Choreonoid", "Choreonoid", pluginPathList.c_str());
+    app.initialize("Choreonoid-ROS", "Choreonoid", pluginPathList.c_str());
 
     auto rosPlugin = PluginManager::instance()->findPlugin("ROS");
     if(!rosPlugin){

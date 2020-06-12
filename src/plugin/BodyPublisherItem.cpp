@@ -208,20 +208,22 @@ void BodyPublisherItem::stop()
 
 void BodyPublisherItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty(_("Max publish rate"), impl->maxPublishRate, changeProperty(impl->maxPublishRate));
+    putProperty(_("Max publishing rate"), impl->maxPublishRate, changeProperty(impl->maxPublishRate));
 }
 
 
 bool BodyPublisherItem::store(Archive& archive)
 {
-    archive.write("maxPublishRate", impl->maxPublishRate);
+    archive.write("max_publishing_rate", impl->maxPublishRate);
     return true;
 }
 
 
 bool BodyPublisherItem::restore(const Archive& archive)
 {
-    archive.read("maxPublishRate", impl->maxPublishRate);
+    if(!archive.read("max_publishing_rate", impl->maxPublishRate)){
+        archive.read("maxPublishRate", impl->maxPublishRate); // old
+    }
     return true;
 }
 

@@ -243,13 +243,13 @@ void WorldROSItem::doPutProperties(PutPropertyFunction& putProperty)
 
 bool WorldROSItem::store(Archive& archive)
 {
-    archive.write("maxClockPublishingRate", impl->maxClockPublishingRate);
+    archive.write("max_clock_publishing_rate", impl->maxClockPublishingRate);
     return true;
 }
 
 
 bool WorldROSItem::restore(const Archive& archive)
 {
-    archive.read("maxClockPublishingRate", impl->maxClockPublishingRate);
+    archive.read("max_clock_publishing_rate", impl->maxClockPublishingRate);
     return true;
 }

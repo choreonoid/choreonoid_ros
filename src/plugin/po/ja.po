@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-06 21:51+0900\n"
+"POT-Creation-Date: 2020-06-12 15:20+0900\n"
 "PO-Revision-Date: 2018-08-08 21:27+0900\n"
 "Last-Translator: nakaoka <s.nakaoka@gmail.com>\n"
 "Language-Team: Japanese\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: WorldROSItem.cpp:59
+#: WorldROSItem.cpp:60
 msgid "WorldROSItem"
 msgstr "ワールドROSアイテム"
 
-#: WorldROSItem.cpp:219
+#: WorldROSItem.cpp:239
 msgid "Max clock publishing rate"
 msgstr "最大クロックパブリッシュレート"
 
@@ -32,3 +32,7 @@ msgstr "ボディパブリッシャーアイテム"
 #: BodyPublisherItem.cpp:211
 msgid "Max publish rate"
 msgstr "最大パブリッシュレート"
+
+#: BodyROSItem.cpp:17
+msgid "BodyROSItem"
+msgstr "ボディROSアイテム"

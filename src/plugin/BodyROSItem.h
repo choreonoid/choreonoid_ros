@@ -1,5 +1,5 @@
-#ifndef CNOID_ROS_PLUGIN_BODY_ROS_ITEM_H_INCLUDED
-#define CNOID_ROS_PLUGIN_BODY_ROS_ITEM_H_INCLUDED
+#ifndef CNOID_ROS_PLUGIN_BODY_ROS_ITEM_H
+#define CNOID_ROS_PLUGIN_BODY_ROS_ITEM_H
 
 #include <cnoid/ControllerItem>
 #include <cnoid/BasicSensorSimulationHelper>
@@ -10,7 +10,6 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/Archive>
-#include "exportdecl.h"
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
@@ -29,27 +28,27 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT BodyROSItem : public ControllerItem
+class BodyROSItem : public ControllerItem
 {
 public:
-    static void initialize(ExtensionManager* ext);
+    static void initializeClass(ExtensionManager* ext);
     
     BodyROSItem();
     BodyROSItem(const BodyROSItem& org);
     virtual ~BodyROSItem();
     bool createSensors(BodyPtr body);
     
-    virtual bool initialize(Target* target);
-    virtual bool start();
-    virtual double timeStep() const {
+    virtual bool initialize(ControllerIO* io) override;
+    virtual bool start() override;
+    virtual double timeStep() const override {
       return timeStep_;
     };
-    virtual void input();
-    virtual bool control();
-    virtual void output();
-    virtual void stop();
+    virtual void input() override;
+    virtual bool control() override;
+    virtual void output() override;
+    virtual void stop() override;
     
-    const BodyPtr& body() const { return simulationBody; };
+    const Body* body() const { return simulationBody; };
     const DeviceList<ForceSensor>& forceSensors() const { return forceSensors_; }
     const DeviceList<RateGyroSensor>& gyroSensors() const { return gyroSensors_; }
     const DeviceList<AccelerationSensor>& accelSensors() const { return accelSensors_; }
@@ -84,14 +83,13 @@ private:
     double joint_state_update_period_;
     double joint_state_last_update_;
 
-    const Target* controllerTarget;
+    ControllerIO* io;
     double controlTime_;
     std::ostream& os;
 
     std::string bodyName;
 
-    boost::shared_ptr<ros::NodeHandle> rosnode_;
-    boost::shared_ptr<ros::AsyncSpinner> async_ros_spin_;
+    std::unique_ptr<ros::NodeHandle> rosnode_;
  
     std::vector<ros::Publisher> force_sensor_publishers_;
     std::vector<ros::Publisher> rate_gyro_sensor_publishers_;

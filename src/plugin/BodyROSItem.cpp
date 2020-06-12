@@ -7,27 +7,24 @@
 #include <cnoid/MessageView>
 #include <ros/console.h>
 #include <geometry_msgs/Point32.h>
+#include <fmt/format.h>
+#include "gettext.h"
 
 using namespace cnoid;
+using fmt::format;
 
-void BodyROSItem::initialize(ExtensionManager* ext) { 
-    static bool initialized = false;
-    int argc = 0;
-    char** argv;
-    if (!ros::isInitialized())
-        ros::init(argc, argv, "choreonoid");
-    if (!initialized) {
-        ext->itemManager().registerClass<BodyROSItem>("BodyROSItem");
-        ext->itemManager().addCreationPanel<BodyROSItem>();
-        initialized = true;
-    }
+
+void BodyROSItem::initializeClass(ExtensionManager* ext)
+{ 
+    ext->itemManager().registerClass<BodyROSItem>(N_("BodyROSItem"));
+    ext->itemManager().addCreationPanel<BodyROSItem>();
 }
 
 
 BodyROSItem::BodyROSItem() :
     os(MessageView::instance()->cout())
 {
-    controllerTarget = NULL;
+    io = nullptr;
     joint_state_update_rate_ = 100.0;
 }
 
@@ -36,7 +33,7 @@ BodyROSItem::BodyROSItem(const BodyROSItem& org) :
     ControllerItem(org),
     os(MessageView::instance()->cout())
 {
-    controllerTarget = NULL;
+    io = nullptr;
     joint_state_update_rate_ = 100.0;
 }
 
@@ -55,7 +52,8 @@ Item* BodyROSItem::doDuplicate() const
 
 bool BodyROSItem::store(Archive& archive)
 {
-    archive.write("jointStateUpdateRate", joint_state_update_rate_);
+    archive.write("body_ros_version", 0);
+    archive.write("joint_state_update_rate", joint_state_update_rate_);
 
     return true;
 }
@@ -63,8 +61,9 @@ bool BodyROSItem::store(Archive& archive)
 
 bool BodyROSItem::restore(const Archive& archive)
 {
-    archive.read("jointStateUpdateRate", joint_state_update_rate_);
-
+    if(!archive.read("joint_state_update_rate", joint_state_update_rate_)){
+        archive.read("jointStateUpdateRate", joint_state_update_rate_); // old
+    }
     return true;
 }
 
@@ -75,20 +74,19 @@ void BodyROSItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-bool BodyROSItem::initialize(Target* target)
+bool BodyROSItem::initialize(ControllerIO* io)
 {
-    if (! target) {
-        MessageView::instance()->putln(MessageView::ERROR, "Target not found");
-        return false;
-    } else if (! target->body()) {
-        MessageView::instance()->putln(MessageView::ERROR, "BodyItem not found");
+    if (!io->body()) {
+        MessageView::instance()->putln(
+            format(_("BodyROSItem \"{0}\" is invalid because it is not assigned to a body."), displayName()),
+            MessageView::WARNING);
         return false;
     }
 
-    controllerTarget = target;
-    simulationBody = target->body();
-    timeStep_ = target->worldTimeStep();
-    controlTime_ = target->currentTime();
+    this->io = io;
+    simulationBody = io->body();
+    timeStep_ = io->worldTimeStep();
+    controlTime_ = io->currentTime();
 
     return true;
 }
@@ -115,17 +113,14 @@ bool BodyROSItem::start()
 
     std::string name = simulationBody->name();
     std::replace(name.begin(), name.end(), '-', '_');
-    rosnode_ = boost::shared_ptr<ros::NodeHandle>(new ros::NodeHandle(name));
+    rosnode_.reset(new ros::NodeHandle(name));
     createSensors(simulationBody);
 
     joint_state_publisher_     = rosnode_->advertise<sensor_msgs::JointState>("joint_states", 1000);
     joint_state_update_period_ = 1.0 / joint_state_update_rate_;
-    joint_state_last_update_   = controllerTarget->currentTime();
+    joint_state_last_update_   = io->currentTime();
     ROS_DEBUG("Joint state update rate %f", joint_state_update_rate_);
 
-    async_ros_spin_.reset(new ros::AsyncSpinner(0));
-    async_ros_spin_->start();
-  
     return true;
 }
 
@@ -233,7 +228,7 @@ bool BodyROSItem::createSensors(BodyPtr body)
 
 bool BodyROSItem::control()
 {
-    controlTime_ = controllerTarget->currentTime();
+    controlTime_ = io->currentTime();
     double updateSince = controlTime_ - joint_state_last_update_;
 
     if (updateSince > joint_state_update_period_) {
@@ -259,7 +254,7 @@ bool BodyROSItem::control()
 void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher)
 {
     geometry_msgs::WrenchStamped force;
-    force.header.stamp.fromSec(controllerTarget->currentTime());
+    force.header.stamp.fromSec(io->currentTime());
     force.header.frame_id = sensor->name();
     force.wrench.force.x = sensor->F()[0] / 1000.0;
     force.wrench.force.y = sensor->F()[1] / 1000.0;
@@ -274,7 +269,7 @@ void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publish
 void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher)
 {
     sensor_msgs::Imu gyro;
-    gyro.header.stamp.fromSec(controllerTarget->currentTime());
+    gyro.header.stamp.fromSec(io->currentTime());
     gyro.header.frame_id = sensor->name();
     gyro.angular_velocity.x = sensor->w()[0];
     gyro.angular_velocity.y = sensor->w()[1];
@@ -286,7 +281,7 @@ void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& p
 void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher)
 {
     sensor_msgs::Imu accel;
-    accel.header.stamp.fromSec(controllerTarget->currentTime());
+    accel.header.stamp.fromSec(io->currentTime());
     accel.header.frame_id = sensor->name();
     accel.linear_acceleration.x = sensor->dv()[0] / 10.0;
     accel.linear_acceleration.y = sensor->dv()[1] / 10.0;
@@ -298,7 +293,7 @@ void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& 
 void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher)
 {
     sensor_msgs::Image vision;
-    vision.header.stamp.fromSec(controllerTarget->currentTime());
+    vision.header.stamp.fromSec(io->currentTime());
     vision.header.frame_id = sensor->name();
     vision.height = sensor->image().height();
     vision.width = sensor->image().width();
@@ -320,7 +315,7 @@ void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher&
 void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher)
 {
     sensor_msgs::PointCloud2 range;
-    range.header.stamp.fromSec(controllerTarget->currentTime());
+    range.header.stamp.fromSec(io->currentTime());
     range.header.frame_id = sensor->name();
     range.width = sensor->resolutionX();
     range.height = sensor->resolutionY();
@@ -390,7 +385,7 @@ void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& p
 void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
 {
     sensor_msgs::LaserScan range;
-    range.header.stamp.fromSec(controllerTarget->currentTime());
+    range.header.stamp.fromSec(io->currentTime());
     range.header.frame_id = sensor->name();
     range.range_max = sensor->maxDistance();
     range.range_min = sensor->minDistance();
@@ -418,7 +413,7 @@ void BodyROSItem::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publi
 {
     sensor_msgs::PointCloud range;
     // Header Info
-    range.header.stamp.fromSec(controllerTarget->currentTime());
+    range.header.stamp.fromSec(io->currentTime());
     range.header.frame_id = sensor->name();
 
     // Calculate Point Cloud data
@@ -501,10 +496,6 @@ void BodyROSItem::stop()
 {
     if (ros::ok()) {
         stop_publish();
-
-        if (async_ros_spin_) {
-            async_ros_spin_->stop();
-        }
 
         if (rosnode_) {
             rosnode_->shutdown();

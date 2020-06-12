@@ -1,6 +1,6 @@
 #include "WorldROSItem.h"
 #include "BodyROSItem.h"
-#include "BodyPublisherItem.h"
+#include "deprecated/BodyPublisherItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/MessageView>
 #include <ros/init.h>

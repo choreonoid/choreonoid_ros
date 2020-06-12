@@ -2,7 +2,7 @@
   @author Shin'ichiro Nakaoka
 */
 
-#include "../BodyPublisherItem.h"
+#include "../deprecated/BodyPublisherItem.h"
 #include <cnoid/PyUtil>
 #include <cnoid/PyBase>
 

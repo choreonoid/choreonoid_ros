@@ -153,7 +153,7 @@ bool BodyROSItem::createSensors(BodyPtr body)
             force_sensor_publishers_[i] = rosnode_->advertise<geometry_msgs::WrenchStamped>(name, 1);
             sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateForceSensor,
                                                           this, sensor, force_sensor_publishers_[i]));
-            ROS_INFO("Create force sensor %s with cycle %f", sensor->name().c_str(), sensor->cycle());
+            ROS_INFO("Create force sensor %s", sensor->name().c_str());
         }
     }
     rate_gyro_sensor_publishers_.resize(gyroSensors_.size());
@@ -164,7 +164,7 @@ bool BodyROSItem::createSensors(BodyPtr body)
             rate_gyro_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
             sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRateGyroSensor,
                                                           this, sensor, rate_gyro_sensor_publishers_[i]));
-            ROS_INFO("Create gyro sensor %s with cycle %f", sensor->name().c_str(), sensor->cycle());
+            ROS_INFO("Create gyro sensor %s", sensor->name().c_str());
         }
     }
     accel_sensor_publishers_.resize(accelSensors_.size());
@@ -175,7 +175,7 @@ bool BodyROSItem::createSensors(BodyPtr body)
             accel_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
             sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateAccelSensor,
                                                           this, sensor, accel_sensor_publishers_[i]));
-            ROS_INFO("Create accel sensor %s with cycle %f", sensor->name().c_str(), sensor->cycle());
+            ROS_INFO("Create accel sensor %s", sensor->name().c_str());
         }
     }
     image_transport::ImageTransport it(*rosnode_);
@@ -187,7 +187,7 @@ bool BodyROSItem::createSensors(BodyPtr body)
             vision_sensor_publishers_[i] = it.advertise(name + "/image_raw", 1);
             sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateVisionSensor,
                                                           this, sensor, vision_sensor_publishers_[i]));
-            ROS_INFO("Create vision sensor %s with cycle %f", sensor->name().c_str(), sensor->cycle());
+            ROS_INFO("Create RGB camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
         }
     }
     range_vision_sensor_publishers_.resize(rangeVisionSensors_.size());
@@ -198,7 +198,7 @@ bool BodyROSItem::createSensors(BodyPtr body)
             range_vision_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
             sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeVisionSensor,
                                                           this, sensor, range_vision_sensor_publishers_[i]));
-            ROS_INFO("Create RGBD sensor %s with cycle %f", sensor->name().c_str(), sensor->cycle());
+            ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
         }
     }
     range_sensor_publishers_.resize(rangeSensors_.size());
@@ -211,7 +211,7 @@ bool BodyROSItem::createSensors(BodyPtr body)
                 range_sensor_pc_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud>(name + "/point_cloud", 1);
                 sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::update3DRangeSensor,
                                                               this, sensor, range_sensor_pc_publishers_[i]));
-                ROS_DEBUG("Create 3d range sensor %s with cycle %f", sensor->name().c_str(), sensor->cycle());
+                ROS_DEBUG("Create 3d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
             }
             else{
                 std::string name = sensor->name();
@@ -219,7 +219,7 @@ bool BodyROSItem::createSensors(BodyPtr body)
                 range_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::LaserScan>(name + "/scan", 1);
                 sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeSensor,
                                                               this, sensor, range_sensor_publishers_[i]));
-                ROS_DEBUG("Create range sensor %s with cycle %f", sensor->name().c_str(), sensor->cycle());
+                ROS_DEBUG("Create 2d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
             }
         } 
     }

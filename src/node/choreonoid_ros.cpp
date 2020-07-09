@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     argv = &args.front();
     cnoid::App app(argc, argv);
 
-    auto rosPluginPath = (filesystem::path(executablePath()).parent_path() / CNOID_VERSION_SUBDIR).string();
+    auto rosPluginPath = (filesystem::path(executableFile()).parent_path() / CNOID_VERSION_SUBDIR).string();
     auto pluginPathVariable = getenv("CNOID_PLUGIN_PATH");
     string pluginPathList;
     if(!pluginPathVariable){

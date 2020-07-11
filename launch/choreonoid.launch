@@ -1,0 +1,5 @@
+<launch>
+  <arg name="choreonoid_arg"/>
+  <node name="choreonoid" pkg="choreonoid_ros" type="choreonoid"
+        args="$(arg choreonoid_arg)" output="screen"/>
+</launch>

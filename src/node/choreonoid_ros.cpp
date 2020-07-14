@@ -43,17 +43,7 @@ int main(int argc, char** argv)
     argc = args.size();
     argv = &args.front();
     cnoid::App app(argc, argv);
-
-    auto rosPluginPath = (filesystem::path(executableFile()).parent_path() / CNOID_VERSION_SUBDIR).string();
-    auto pluginPathVariable = getenv("CNOID_PLUGIN_PATH");
-    string pluginPathList;
-    if(!pluginPathVariable){
-        pluginPathList = rosPluginPath;
-    } else {
-        pluginPathList = string(pluginPathVariable) + PATH_DELIMITER + rosPluginPath;
-    }
-
-    app.initialize("Choreonoid-ROS", "Choreonoid", pluginPathList.c_str());
+    app.initialize("Choreonoid-ROS", "Choreonoid");
 
     auto rosPlugin = PluginManager::instance()->findPlugin("ROS");
     if(!rosPlugin){

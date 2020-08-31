@@ -125,7 +125,7 @@ bool BodyROSItem::start()
 }
 
 
-bool BodyROSItem::createSensors(BodyPtr body)
+void BodyROSItem::createSensors(BodyPtr body)
 {
     DeviceList<> devices = body->devices();
 

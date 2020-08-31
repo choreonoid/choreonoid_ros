@@ -36,7 +36,7 @@ public:
     BodyROSItem();
     BodyROSItem(const BodyROSItem& org);
     virtual ~BodyROSItem();
-    bool createSensors(BodyPtr body);
+    void createSensors(BodyPtr body);
     
     virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;

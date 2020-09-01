@@ -14,7 +14,9 @@
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>image_transport</depend>
+  <depend>pluginlib</depend>
   <export>
     <build_type>cmake</build_type>
+    <choreonoid_ros plugin="${prefix}/robot_hardware_sim.xml"/>
   </export>
 </package>

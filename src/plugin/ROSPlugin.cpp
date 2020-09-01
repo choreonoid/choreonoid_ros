@@ -1,5 +1,6 @@
 #include "WorldROSItem.h"
 #include "BodyROSItem.h"
+#include "ROSControlItem.h"
 #include "deprecated/BodyPublisherItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/MessageView>
@@ -28,6 +29,7 @@ public:
             
         WorldROSItem::initializeClass(this);
         BodyROSItem::initializeClass(this);
+        ROSControlItem::initializeClass(this);
         BodyPublisherItem::initializeClass(this);
         
         return true;

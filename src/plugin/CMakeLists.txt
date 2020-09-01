@@ -6,6 +6,8 @@ choreonoid_add_plugin(${target}
   ROSPlugin.cpp
   WorldROSItem.cpp
   BodyROSItem.cpp
+  ROSControlItem.cpp
+  RobotHWSim.cpp
   deprecated/BodyPublisherItem.cpp
   ${mofiles}
   )
@@ -15,6 +17,7 @@ target_link_libraries(${target}
   ${std_msgs_LIBRARIES}
   ${sensor_msgs_LIBRARIES}
   ${image_transport_LIBRARIES}
+  ${catkin_LIBRARIES}
   ${CHOREONOID_BODY_PLUGIN_LIBRARIES}
   )
 

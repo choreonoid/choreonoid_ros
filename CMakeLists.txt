@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   image_transport
   choreonoid
+  pluginlib
   )
 
 # find_package(Qt5 COMPONENTS Widgets REQUIRED)

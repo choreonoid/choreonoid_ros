@@ -1,8 +1,7 @@
-<library path="lib/librobot_hw_sim">
-
+<library path="lib/libCnoidHW">
   <class
-      name="cnoid/RobotHWSim"
-      type="cnoid::RobotHWSim"
+      name="hardware_interface/CnoidHW"
+      type="hardware_interface::CnoidHW"
       base_class_type="hardware_interface::RobotHW">
     <description>
       A default robot simulation interface which constructs joint handles from an SDF/URDF.

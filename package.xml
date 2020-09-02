@@ -14,9 +14,16 @@
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>image_transport</depend>
+  
+  <depend>controller_manager</depend>
+  <depend>control_toolbox</depend>
   <depend>pluginlib</depend>
+  <depend>hardware_interface</depend>
+  <depend>transmission_interface</depend>
+  <depend>joint_limits_interface</depend>
+  <depend>urdf</depend>
   <export>
     <build_type>cmake</build_type>
-    <choreonoid_ros plugin="${prefix}/robot_hardware_sim.xml"/>
+    <choreonoid_ros plugin="${prefix}/plugins.xml"/>
   </export>
 </package>

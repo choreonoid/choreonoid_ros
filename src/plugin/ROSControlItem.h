@@ -13,14 +13,15 @@
 
 // ROS //
 #include <ros/ros.h>
-#include "RobotHWSim.h"
 #include <pluginlib/class_loader.h>
 #include <controller_manager/controller_manager.h>
+#include <hardware_interface/robot_hw.h>
 
 // STL //
 #include <vector>
 #include <fstream>
-#include <memory>
+
+// Boost //
 #include <boost/shared_ptr.hpp>
 
 namespace cnoid
@@ -57,26 +58,14 @@ class ROSControlItem : public ControllerItem
   double time_;
 
   ros::NodeHandle nh_;
-  std::shared_ptr<pluginlib::ClassLoader<RobotHWSim>> rbt_hw_sim_loader_;
-  RobotHWSimPtr rbt_hw_sim_;
+  std::shared_ptr<pluginlib::ClassLoader<hardware_interface::RobotHW>> rbt_hw_sim_loader_;
+  boost::shared_ptr<hardware_interface::RobotHW> rbt_hw_sim_;
   std::shared_ptr<controller_manager::ControllerManager> manager_;
-
   
   std::string namespace_{""};
-  std::string robot_description_{"robot_description"};
 };
 
-typedef std::shared_ptr<ROSControlItem> ROSControlPtr;
-
-template<class T>
-boost::shared_ptr<T> to_boost(const std::shared_ptr<T> &p) {
-    return boost::shared_ptr<T>(p.get(), [p](...) mutable { p.reset(); });
-}
-
-template<class T>
-std::shared_ptr<T> to_std(const boost::shared_ptr<T> &p) {
-    return std::shared_ptr<T>(p.get(), [p](...) mutable { p.reset(); });
-}
+typedef ref_ptr<ROSControlItem> ROSControlItemPtr;
 
 } // namespace cnoid
 

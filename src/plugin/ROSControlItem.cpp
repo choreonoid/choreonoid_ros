@@ -5,15 +5,20 @@
 #include "ROSControlItem.h"
 #include <cnoid/MessageView>
 #include <cnoid/PutPropertyFunction>
+#include <cnoid/BodyItem>
 #include <cnoid/ItemManager>
 #include <cnoid/Archive>
 #include <sstream>
+#include <fmt/format.h>
+#include "gettext.h"
 
 namespace cnoid
 {
 void ROSControlItem::initializeClass(ExtensionManager* ext)
 {
-  ext->itemManager().registerClass<ROSControlItem>("ROSControlItem");
+  using namespace std;
+  using fmt::format;
+  ext->itemManager().registerClass<ROSControlItem>(N_("ROSControlItem"));
   ext->itemManager().addCreationPanel<ROSControlItem>();
 }
 
@@ -24,7 +29,12 @@ ROSControlItem::ROSControlItem(void)
 
 ROSControlItem::ROSControlItem(const ROSControlItem& org) : ControllerItem(org)
 {
-    io_ = nullptr;
+  io_ = nullptr;
+}
+
+ROSControlItem::~ROSControlItem()
+{
+  stop();
 }
 
 Item* ROSControlItem::doDuplicate(void) const
@@ -35,7 +45,6 @@ Item* ROSControlItem::doDuplicate(void) const
 bool ROSControlItem::store(Archive& archive)
 {
   archive.write("name space", namespace_);
-  archive.write("robot_descripton", robot_description_);
 
   return true;
 }
@@ -45,19 +54,13 @@ bool ROSControlItem::restore(const Archive& archive)
   if(!archive.read("name space", namespace_))
     archive.read("name space", namespace_);
   
-  if(!archive.read("robot_description", robot_description_))
-    archive.read("robot_escription", robot_description_);
-
   return true;
 }
 
 void ROSControlItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-  putProperty("Name space for the program.",
+  putProperty("Name space",
     namespace_, changeProperty(namespace_));
-  
-  putProperty("Robot description parameter name.",
-    robot_description_, changeProperty(robot_description_));
 }
 
 bool ROSControlItem::initialize(ControllerIO* io)
@@ -68,7 +71,7 @@ bool ROSControlItem::initialize(ControllerIO* io)
 
   // Check body //
   if (!io->body()) {
-    ss.clear();
+    ss.str("");
     ss << "ROSControlItem \"" << displayName() << "\" is invalid." << endl;
     ss << "Because it is not assigned to a body." << endl;
     MessageView::instance()->put(ss.str(), MessageView::Error);
@@ -78,13 +81,14 @@ bool ROSControlItem::initialize(ControllerIO* io)
 
   // Check that ROS has been initialized
   if(!ros::isInitialized()) {
-    ss.clear();
+    ss.str("");
     ss << "ROS master is not initialized." << endl;
     MessageView::instance()->put(ss.str(), MessageView::Warning);
     
     return false;
   }
-  
+
+  // Copy elements to the local arfuments //
   io_ = io;
   body_ = io->body();
   tstep_ = io->worldTimeStep();
@@ -96,19 +100,18 @@ bool ROSControlItem::initialize(ControllerIO* io)
 bool ROSControlItem::start(void)
 {
   using namespace std;
-  using namespace cnoid;
+  using namespace hardware_interface;
   stringstream ss;
 
   nh_ = ros::NodeHandle(namespace_);
 
   try {
     // ros plugin loader //
-    rbt_hw_sim_loader_ = make_shared<pluginlib::ClassLoader<RobotHWSim>>("choreonoid_ros", "cnoid::RobotHWSim");
-
-    //  rbt_hw_sim_ = to_std<RobotHWSim>(rbt_hw_sim_loader_->createInstance("cnoid/RobotHWSim"));
-    // load cnoid::RobotHWSim //
-    if(!rbt_hw_sim_->initSim(nh_, robot_description_)) {
-      ss.clear();
+    rbt_hw_sim_loader_ = make_shared<pluginlib::ClassLoader<RobotHW>>("choreonoid_ros", "hardware_interface::RobotHW");
+        rbt_hw_sim_ = rbt_hw_sim_loader_->createInstance("hardware_interface/CnoidHW");
+    // load hardware_interface  //
+    if(!rbt_hw_sim_->init(nh_, nh_)) {
+      ss.str("");
       ss << "Could not initialize robot simulation interface" << endl;
       MessageView::instance()->put(ss.str(), MessageView::Error);
     }
@@ -116,12 +119,12 @@ bool ROSControlItem::start(void)
     manager_ = make_shared<controller_manager::ControllerManager>(rbt_hw_sim_.get(), nh_);
   }
   catch(pluginlib::LibraryLoadException &ex) {
-    ss.clear();
+    ss.str("");
     ss << "Failed to create robot simulation interface loader : " << ex.what() << endl;
     MessageView::instance()->put(ss.str(), MessageView::Error);
   }
 
-  ss.clear();
+  ss.str("");
   ss << "Loaded cnoid::ROSControlItem" << endl;
   MessageView::instance()->put(ss.str(), MessageView::Normal);
   
@@ -130,13 +133,39 @@ bool ROSControlItem::start(void)
 
 void ROSControlItem::input(void)
 {
+  time_ = io_->currentTime();
+  
+  using namespace std;
+  using namespace cnoid;
+  stringstream ss;
+  ss.str("");
+  ss << "input() : " << time_ << endl;
+  MessageView::instance()->put(ss.str(), MessageView::Normal);
 }
 bool ROSControlItem::control(void)
 {
+  time_ = io_->currentTime();
+  
+  using namespace std;
+  using namespace cnoid;
+  stringstream ss;
+  ss.str("");
+  ss << "control() : " << time_ << endl;
+  MessageView::instance()->put(ss.str(), MessageView::Normal);
+  
 }
 
 void ROSControlItem::output(void)
 {
+  time_ = io_->currentTime();
+  
+  using namespace std;
+  using namespace cnoid;
+  stringstream ss;
+  ss.str("");
+  ss << "output() : " << time_ << endl;
+  MessageView::instance()->put(ss.str(), MessageView::Normal);
+
 }
 
 void ROSControlItem::stop(void)

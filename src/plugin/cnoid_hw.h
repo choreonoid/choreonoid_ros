@@ -4,8 +4,8 @@
 /// @author Ryodo Tanaka 
 ///////////////////////////////////////////////////////////
 
-#ifndef CNOID_ROS_PLUGIN_ROBOT_HW_SIM_H
-#define CNOID_ROS_PLUGIN_ROBOT_HW_SIM_H
+#ifndef HARDWARE_INTERFACE_CNOID_HW_H
+#define HARDWARE_INTERFACE_CNOID_HW_H
 
 // ROS //
 #include <control_toolbox/pid.h>
@@ -20,19 +20,19 @@
 #include <ros/ros.h>
 #include <pluginlib/class_list_macros.h>
 
-namespace cnoid
+namespace hardware_interface
 {
-class RobotHWSim : public hardware_interface::RobotHW
+class CnoidHW : public RobotHW
 {
  public:
-  bool initSim(ros::NodeHandle& nh, const std::string& param_name);
+  virtual bool init(ros::NodeHandle& robot_nh, ros::NodeHandle& robot_hw_nh) override;
   
   virtual void read(const ros::Time& time, const ros::Duration& period) override;
   virtual void write(const ros::Time& time, const ros::Duration& period) override;
 
  private:
 
-  bool loadURDF(const std::string& param_name);
+  bool loadURDF(const std::string& param_name="robot_description");
 
   ros::NodeHandle nh_;
   std::vector<transmission_interface::TransmissionInfo> tmss_;
@@ -53,7 +53,7 @@ class RobotHWSim : public hardware_interface::RobotHW
   joint_limits_interface::EffortJointSoftLimitsInterface   ej_lim_if_;
 };
 
-typedef std::shared_ptr<RobotHWSim> RobotHWSimPtr;
-} // namespace cnoid
+typedef std::shared_ptr<CnoidHW> CnoidHWPtr;
+} // namespace hardware_interface
 
-#endif // CNOID_ROS_PLUGIN_ROBOT_HW_SIM_H
+#endif // HARDWARE_INTERFACE_CNOID_HW_H

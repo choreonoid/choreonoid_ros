@@ -13,7 +13,13 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   image_transport
   choreonoid
+  controller_manager
+  control_toolbox
   pluginlib
+  hardware_interface
+  transmission_interface
+  joint_limits_interface
+  urdf
   )
 
 # find_package(Qt5 COMPONENTS Widgets REQUIRED)

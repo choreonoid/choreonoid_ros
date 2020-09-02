@@ -26,8 +26,8 @@
 #include <vector>
 #include <fstream>
 
-namespace cnoid {
-
+namespace cnoid
+{
 class BodyROSItem : public ControllerItem
 {
 public:

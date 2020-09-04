@@ -5,6 +5,7 @@
 #include "robot_hw_cnoid.h"
 // ROS //
 #include <transmission_interface/transmission_parser.h>
+#include <angles/angles.h>
 // Cnoid //
 #include <cnoid/MessageView>
 // STL //
@@ -152,16 +153,6 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
     }
     
     registerJointLimits(i);
-
-    cout << joint_names_[i] << " : " << links_[i]->actuationModeString() << endl;
-    
-    // set first value //
-    link->q_target() = command_[i].position;
-    link->dq_target() = command_[i].velocity;
-    link->u() = command_[i].effort;
-    // links_[i]->q_target() = command_[i].position;
-    // links_[i]->dq_target() = command_[i].velocity;
-    // links_[i]->u() = command_[i].effort;
   }
 
   // Register interfaces
@@ -339,21 +330,44 @@ bool RobotHWCnoid::registerJointLimits(const uint& i)
 
 void RobotHWCnoid::read(const ros::Time& time, const ros::Duration& period)
 {
-  using namespace std;
   for(uint i=0; i<dof_; i++) {
-    data_[i].position = links_[i]->q();
+    double position = links_[i]->q();
+    if (joint_types_[i] == urdf::Joint::PRISMATIC)
+      data_[i].position = position;
+    else
+      data_[i].position += angles::shortest_angular_distance(data_[i].position, position);
+
     data_[i].velocity = links_[i]->dq();
-    data_[i].effort = links_[i]->u();
+    data_[i].effort = links_[i]->ddq();
   }
 }
 
 void RobotHWCnoid::write(const ros::Time& time, const ros::Duration& period)
-{
-  using namespace std;
-  for(uint i=0; i<2; i++) {
-    links_[i]->q_target() = command_[i].position;
-    // links_[i]->dq_target() = command_[i].velocity;
-    // links_[i]->u() = command_[i].effort;
+{ 
+  pj_sat_if_.enforceLimits(period);
+  pj_lim_if_.enforceLimits(period);
+  vj_sat_if_.enforceLimits(period);
+  vj_lim_if_.enforceLimits(period);
+  ej_sat_if_.enforceLimits(period);
+  ej_lim_if_.enforceLimits(period);
+
+  for(uint i=0; i<dof_; i++) {
+    switch (ctrl_types_[i]) {
+      case ControlType::POSITION: {
+        links_[i]->q_target() = command_[i].position;
+        break;
+      }
+      case ControlType::VELOCITY: {
+        links_[i]->dq_target() = command_[i].velocity;
+        break;
+      }
+      case ControlType::EFFORT: {
+        links_[i]->u() = command_[i].effort;
+        break;
+      }
+      default:
+        break;
+    };
   }
 }
 } // namespace hardware_interface

@@ -127,11 +127,6 @@ bool ROSControlItem::start(void)
   ss.str("");
   ss << "Loaded cnoid::ROSControlItem" << endl;
   MessageView::instance()->put(ss.str(), MessageView::Normal);
-
-  cnoid::Link* turret_y = io_->body()->link("TURRET_Y");
-  turret_y->setActuationMode(turret_y->actuationMode());
-  cnoid::Link* turret_p = io_->body()->link("TURRET_P");
-  turret_p->setActuationMode(turret_p->actuationMode());  
   
   return true;
 }
@@ -150,14 +145,11 @@ bool ROSControlItem::control(void)
   ros::Time now(now_sec, static_cast<int>(now_nsec));
   ros::Duration period = now - last;
 
-  cnoid::Link* turret_y = io_->body()->link("TURRET_Y");
-  cnoid::Link* turret_p = io_->body()->link("TURRET_P");
+  rbt_hw_sim_->read(now, period);
+  rbt_hw_sim_->write(now, period);
 
-  turret_y->q_target() = 0;
-  turret_p->q_target() = 0;
-  
-  // rbt_hw_sim_->read(now, period);
-  // rbt_hw_sim_->write(now, period);
+  manager_->update(now, period, false);
+
   
   time_ = io_->currentTime();
 }

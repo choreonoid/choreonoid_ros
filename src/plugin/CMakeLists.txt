@@ -17,6 +17,7 @@ choreonoid_add_plugin(${target}
   ROSPlugin.cpp
   WorldROSItem.cpp
   BodyROSItem.cpp
+  robot_hw_sim.h
   ROSControlItem.cpp
   deprecated/BodyPublisherItem.cpp
   ${mofiles}

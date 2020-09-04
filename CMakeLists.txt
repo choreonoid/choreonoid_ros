@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   transmission_interface
   joint_limits_interface
   urdf
+  angles
   )
 
 # find_package(Qt5 COMPONENTS Widgets REQUIRED)

@@ -22,6 +22,7 @@
   <depend>transmission_interface</depend>
   <depend>joint_limits_interface</depend>
   <depend>urdf</depend>
+  <depend>angles</depend>
   <export>
     <build_type>cmake</build_type>
     <choreonoid_ros plugin="${prefix}/plugins.xml"/>

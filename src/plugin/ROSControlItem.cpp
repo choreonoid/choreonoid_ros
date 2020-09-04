@@ -107,18 +107,17 @@ bool ROSControlItem::start(void)
 
   try {
     // ros plugin loader //
-    rbt_hw_sim_loader_ = make_shared<pluginlib::ClassLoader<RobotHW>>("choreonoid_ros", "hardware_interface::RobotHW");
-        rbt_hw_sim_ = rbt_hw_sim_loader_->createInstance("hardware_interface/CnoidHW");
+    rbt_hw_sim_loader_ = make_shared<pluginlib::ClassLoader<RobotHWSim<cnoid::ControllerIO*>>>("choreonoid_ros", "hardware_interface::RobotHWSim<cnoid::ControllerIO*>");
+    rbt_hw_sim_ = rbt_hw_sim_loader_->createInstance("hardware_interface/RobotHWCnoid");
     // load hardware_interface  //
-    if(!rbt_hw_sim_->init(nh_, nh_)) {
+    if(!rbt_hw_sim_->initSim(nh_, io_)) {
       ss.str("");
       ss << "Could not initialize robot simulation interface" << endl;
       MessageView::instance()->put(ss.str(), MessageView::Error);
     }
     // register ros control manager //
     manager_ = make_shared<controller_manager::ControllerManager>(rbt_hw_sim_.get(), nh_);
-  }
-  catch(pluginlib::LibraryLoadException &ex) {
+  } catch(pluginlib::LibraryLoadException &ex) {
     ss.str("");
     ss << "Failed to create robot simulation interface loader : " << ex.what() << endl;
     MessageView::instance()->put(ss.str(), MessageView::Error);

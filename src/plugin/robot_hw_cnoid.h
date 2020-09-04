@@ -81,7 +81,7 @@ class RobotHWCnoid : public RobotHWSim<cnoid::ControllerIO*>
 
   uint dof_{0};
   std::vector<std::string> joint_names_;
-  std::vector<ControlType> ctrl_type_;
+  std::vector<ControlType> ctrl_types_;
   std::vector<Data> data_;
   std::vector<Data> command_;
   std::unordered_map<std::string, int> joint_map_;

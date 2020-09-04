@@ -29,7 +29,7 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
   
   dof_ = tmss_.size();
   joint_names_.resize(dof_);
-  ctrl_type_.resize(dof_);
+  ctrl_types_.resize(dof_);
   data_.resize(dof_);
   command_.resize(dof_);
 
@@ -102,20 +102,20 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
       link->setActuationMode(link->actuationMode());
       switch(link->actuationMode()) {
         case Link::JOINT_ANGLE:
-          ctrl_type_[i] = ControlType::POSITION;
+          ctrl_types_[i] = ControlType::POSITION;
           joint_handle_ = hi::JointHandle(
             js_if_.getHandle(joint_names_[i]), &command_[i].position);
           pj_if_.registerHandle(joint_handle_);
           break;
         case Link::JOINT_VELOCITY:
         case Link::JOINT_SURFACE_VELOCITY: 
-          ctrl_type_[i] = ControlType::VELOCITY;
+          ctrl_types_[i] = ControlType::VELOCITY;
           joint_handle_ = hi::JointHandle(
             js_if_.getHandle(joint_names_[i]), &command_[i].velocity);
           vj_if_.registerHandle(joint_handle_);
           break;
         case Link::JOINT_EFFORT:
-          ctrl_type_[i] = ControlType::EFFORT;
+          ctrl_types_[i] = ControlType::EFFORT;
           joint_handle_ = hi::JointHandle(
             js_if_.getHandle(joint_names_[i]), &command_[i].effort);
           ej_if_.registerHandle(joint_handle_);
@@ -126,21 +126,21 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
     } else {
       switch(if_map.at(joint_ifs[0])) {
         case ControlType::POSITION :
-          ctrl_type_[i] = ControlType::POSITION;
+          ctrl_types_[i] = ControlType::POSITION;
           joint_handle_ = hi::JointHandle(
             js_if_.getHandle(joint_names_[i]), &command_[i].position);
           pj_if_.registerHandle(joint_handle_);
           link->setActuationMode(Link::JOINT_ANGLE);
           break;
         case ControlType::VELOCITY :
-          ctrl_type_[i] = ControlType::VELOCITY;
+          ctrl_types_[i] = ControlType::VELOCITY;
           joint_handle_ = hi::JointHandle(
             js_if_.getHandle(joint_names_[i]), &command_[i].velocity);
           vj_if_.registerHandle(joint_handle_);
           link->setActuationMode(Link::JOINT_VELOCITY);
           break;
         case ControlType::EFFORT :
-          ctrl_type_[i] = ControlType::EFFORT;
+          ctrl_types_[i] = ControlType::EFFORT;
           joint_handle_ = hi::JointHandle(
             js_if_.getHandle(joint_names_[i]), &command_[i].effort);
           ej_if_.registerHandle(joint_handle_);
@@ -286,7 +286,7 @@ bool RobotHWCnoid::registerJointLimits(const uint& i)
 
   // soft limits //
   if (has_soft_limits) {
-    switch (ctrl_type_[i]) {
+    switch (ctrl_types_[i]) {
       case ControlType::POSITION : {
         const joint_limits_interface::PositionJointSoftLimitsHandle
             limits_handle(joint_handle_, limits, soft_limits);
@@ -309,7 +309,7 @@ bool RobotHWCnoid::registerJointLimits(const uint& i)
         break;
     };
   } else {
-    switch (ctrl_type_[i]) {
+    switch (ctrl_types_[i]) {
       case ControlType::POSITION : {
         const joint_limits_interface::PositionJointSaturationHandle
             sat_handle(joint_handle_, limits);

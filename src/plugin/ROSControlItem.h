@@ -15,7 +15,7 @@
 #include <ros/ros.h>
 #include <pluginlib/class_loader.h>
 #include <controller_manager/controller_manager.h>
-#include <hardware_interface/robot_hw.h>
+#include "robot_hw_sim.h"
 
 // STL //
 #include <vector>
@@ -58,8 +58,8 @@ class ROSControlItem : public ControllerItem
   double time_;
 
   ros::NodeHandle nh_;
-  std::shared_ptr<pluginlib::ClassLoader<hardware_interface::RobotHW>> rbt_hw_sim_loader_;
-  boost::shared_ptr<hardware_interface::RobotHW> rbt_hw_sim_;
+  std::shared_ptr<pluginlib::ClassLoader<hardware_interface::RobotHWSim<cnoid::ControllerIO*>>> rbt_hw_sim_loader_;
+  boost::shared_ptr<hardware_interface::RobotHWSim<cnoid::ControllerIO*>> rbt_hw_sim_;
   std::shared_ptr<controller_manager::ControllerManager> manager_;
   
   std::string namespace_{""};

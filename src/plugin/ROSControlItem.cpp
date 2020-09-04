@@ -100,6 +100,7 @@ bool ROSControlItem::initialize(ControllerIO* io)
 bool ROSControlItem::start(void)
 {
   using namespace std;
+  using namespace cnoid;
   using namespace hardware_interface;
   stringstream ss;
 
@@ -126,45 +127,55 @@ bool ROSControlItem::start(void)
   ss.str("");
   ss << "Loaded cnoid::ROSControlItem" << endl;
   MessageView::instance()->put(ss.str(), MessageView::Normal);
+
+  cnoid::Link* turret_y = io_->body()->link("TURRET_Y");
+  turret_y->setActuationMode(turret_y->actuationMode());
+  cnoid::Link* turret_p = io_->body()->link("TURRET_P");
+  turret_p->setActuationMode(turret_p->actuationMode());  
   
   return true;
 }
 
 void ROSControlItem::input(void)
 {
-  time_ = io_->currentTime();
-  
-  using namespace std;
-  using namespace cnoid;
-  stringstream ss;
-  ss.str("");
-  ss << "input() : " << time_ << endl;
-  MessageView::instance()->put(ss.str(), MessageView::Normal);
 }
 bool ROSControlItem::control(void)
 {
+  int last_sec = static_cast<int>(time_);
+  double last_nsec = (time_ - last_sec) * 1e9;
+  int now_sec = static_cast<int>(io_->currentTime());
+  double now_nsec = (io_->currentTime() - now_sec) * 1e9;
+  
+  ros::Time last(last_sec, static_cast<int>(last_nsec));
+  ros::Time now(now_sec, static_cast<int>(now_nsec));
+  ros::Duration period = now - last;
+
+  cnoid::Link* turret_y = io_->body()->link("TURRET_Y");
+  cnoid::Link* turret_p = io_->body()->link("TURRET_P");
+
+  turret_y->q_target() = 0;
+  turret_p->q_target() = 0;
+  
+  // rbt_hw_sim_->read(now, period);
+  // rbt_hw_sim_->write(now, period);
+  
   time_ = io_->currentTime();
-  
-  using namespace std;
-  using namespace cnoid;
-  stringstream ss;
-  ss.str("");
-  ss << "control() : " << time_ << endl;
-  MessageView::instance()->put(ss.str(), MessageView::Normal);
-  
 }
 
 void ROSControlItem::output(void)
 {
-  time_ = io_->currentTime();
+  // int last_sec = static_cast<int>(time_);
+  // double last_nsec = (time_ - last_sec) * 1e9;
+  // int now_sec = static_cast<int>(io_->currentTime());
+  // double now_nsec = (io_->currentTime() - now_sec) * 1e9;
   
-  using namespace std;
-  using namespace cnoid;
-  stringstream ss;
-  ss.str("");
-  ss << "output() : " << time_ << endl;
-  MessageView::instance()->put(ss.str(), MessageView::Normal);
+  // ros::Time last(last_sec, static_cast<int>(last_nsec));
+  // ros::Time now(now_sec, static_cast<int>(now_nsec));
+  // ros::Duration period = now - last;
 
+  // rbt_hw_sim_->write(now, period);
+  
+  // time_ = io_->currentTime();
 }
 
 void ROSControlItem::stop(void)

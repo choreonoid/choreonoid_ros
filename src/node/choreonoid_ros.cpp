@@ -1,5 +1,6 @@
 #include <cnoid/Config>
 #include <cnoid/App>
+#include <cnoid/ProjectManager>
 #include <cnoid/PluginManager>
 #include <cnoid/Plugin>
 #include <cnoid/ExecutablePath>
@@ -44,6 +45,7 @@ int main(int argc, char** argv)
     argv = &args.front();
     cnoid::App app(argc, argv);
     app.initialize("Choreonoid-ROS", "Choreonoid");
+    ProjectManager::instance()->loadBuiltinProject(":/Base/project/layout.cnoid");
 
     auto rosPlugin = PluginManager::instance()->findPlugin("ROS");
     if(!rosPlugin){

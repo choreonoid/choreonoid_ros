@@ -6,7 +6,7 @@ choreonoid_make_gettext_mo_files(${target} mofiles)
 add_library(RobotHWCnoid robot_hw_cnoid.cpp)
 target_link_libraries(RobotHWCnoid ${catkin_LIBRARIES} ${CHOREONOID_BODY_LIBRARIES} ${CHOREONOID_BODY_PLUGIN_LIBRARIES})
 
-install(TARGETS ${PROJECT_NAME} RobotHWCnoid
+install(TARGETS RobotHWCnoid
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

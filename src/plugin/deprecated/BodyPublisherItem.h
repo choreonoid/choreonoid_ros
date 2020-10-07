@@ -2,12 +2,13 @@
 #define CNOID_ROS_PLUGIN_BODY_PUBLISHER_ITEM_H
 
 #include <cnoid/ControllerItem>
+#include "../exportdecl.h"
 
 namespace cnoid {
 
 class BodyPublisherItemImpl;
 
-class BodyPublisherItem : public ControllerItem
+class CNOID_EXPORT BodyPublisherItem : public ControllerItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);

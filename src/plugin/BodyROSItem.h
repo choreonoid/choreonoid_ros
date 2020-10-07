@@ -26,9 +26,11 @@
 #include <vector>
 #include <fstream>
 
+#include "exportdecl.h"
+
 namespace cnoid {
 
-class BodyROSItem : public ControllerItem
+class CNOID_EXPORT BodyROSItem : public ControllerItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);

@@ -9,7 +9,8 @@
   <url type="website">http://choreonoid.org</url>
   <url type="repository">https://github.com/choreonoid/choreonoid_ros_samples.git</url>
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>choreonoid</depend>
+  <build_depend version_gte="1.8.1">choreonoid</build_depend>
+  <exec_depend version_gte="1.8.1">choreonoid</exec_depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>

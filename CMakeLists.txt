@@ -15,9 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   choreonoid
   )
 
-# find_package(Qt5 COMPONENTS Widgets REQUIRED)
-
-catkin_package(SKIP_CMAKE_CONFIG_GENERATION SKIP_PKG_CONFIG_GENERATION)
+catkin_package()
 
 if(CHOREONOID_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD ${CHOREONOID_CXX_STANDARD})

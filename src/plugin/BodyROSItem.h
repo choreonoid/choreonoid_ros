@@ -63,10 +63,10 @@ public:
     void setModuleName(const std::string& name);
 
 protected:
-    virtual Item* doDuplicate() const;
-    virtual bool store(Archive& archive);
-    virtual bool restore(const Archive& archive);
-    void doPutProperties(PutPropertyFunction& putProperty);
+    virtual Item* doDuplicate() const override;
+    virtual bool store(Archive& archive) override;
+    virtual bool restore(const Archive& archive) override;
+    virtual void doPutProperties(PutPropertyFunction& putProperty) override;
 
 private:
     BodyPtr simulationBody;

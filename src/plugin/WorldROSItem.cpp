@@ -198,7 +198,7 @@ void WorldROSItem::Impl::setCurrentSimulatorItem(SimulatorItem* simulatorItem)
 
     currentSimulatorItemConnections.add(
         simulatorItem->sigSimulationFinished().connect(
-            [&](){ clearCurrentSimulatorItem(); }));
+            [&](bool /* isForced */){ clearCurrentSimulatorItem(); }));
 }
 
 

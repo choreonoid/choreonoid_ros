@@ -2,10 +2,11 @@
 #define CNOID_ROS_PLUGIN_WORLD_ROS_ITEM_H
 
 #include <cnoid/Item>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class WorldROSItem : public Item
+class CNOID_EXPORT WorldROSItem : public Item
 {
 public:
     static void initializeClass(ExtensionManager* ext);

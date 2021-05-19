@@ -15,7 +15,7 @@ target_link_libraries(${target}
   ${std_msgs_LIBRARIES}
   ${sensor_msgs_LIBRARIES}
   ${image_transport_LIBRARIES}
-  ${CHOREONOID_BODY_PLUGIN_LIBRARIES}
+  Choreonoid::CnoidBodyPlugin
   )
 
 if(CHOREONOID_ENABLE_PYTHON)

@@ -24,10 +24,6 @@ else()
   add_compile_options(-std=c++14)
 endif()
 
-if(CHOREONOID_COMPILE_DEFINITIONS)
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS ${CHOREONOID_COMPILE_DEFINITIONS})
-endif()
-
 include_directories(${catkin_INCLUDE_DIRS})
 
 add_subdirectory(src)

@@ -16,12 +16,9 @@ template<typename... Ts>
 class RobotHWSim : public RobotHW
 {
  public:
-  RobotHWSim(void) = default;
-  ~RobotHWSim(void) =  default;
-
   virtual bool initSim(const ros::NodeHandle& nh, Ts... args) = 0;
-  virtual void read(const ros::Time& time, const ros::Duration& period) override;
-  virtual void write(const ros::Time& time, const ros::Duration& period) override;
+  virtual void read(const ros::Time& time, const ros::Duration& period) override = 0;
+  virtual void write(const ros::Time& time, const ros::Duration& period) override = 0;
 };
 
 } // namespace hardware_interface

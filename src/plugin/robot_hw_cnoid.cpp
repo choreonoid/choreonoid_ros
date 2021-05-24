@@ -6,6 +6,7 @@
 // ROS //
 #include <transmission_interface/transmission_parser.h>
 #include <angles/angles.h>
+#include <pluginlib/class_list_macros.h>
 // Cnoid //
 #include <cnoid/MessageView>
 // STL //
@@ -371,5 +372,4 @@ void RobotHWCnoid::write(const ros::Time& time, const ros::Duration& period)
   }
 }
 } // namespace hardware_interface
-
 PLUGINLIB_EXPORT_CLASS(hardware_interface::RobotHWCnoid, hardware_interface::RobotHWSim<cnoid::ControllerIO*>)

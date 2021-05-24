@@ -18,7 +18,6 @@
 #include <joint_limits_interface/joint_limits_urdf.h>
 #include <urdf/model.h>
 #include <ros/ros.h>
-#include <pluginlib/class_list_macros.h>
 
 #include "robot_hw_sim.h"
 
@@ -37,7 +36,7 @@ class RobotHWCnoid : public RobotHWSim<cnoid::ControllerIO*>
   virtual bool initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args) final;
   virtual void read(const ros::Time& time, const ros::Duration& period) final;
   virtual void write(const ros::Time& time, const ros::Duration& period) final;
-
+  
  private:
 
   enum ControlType { POSITION, VELOCITY, EFFORT, POSITION_PID, VELOCITY_PID, EFFORT_PID };

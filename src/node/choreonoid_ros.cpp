@@ -47,9 +47,16 @@ int main(int argc, char** argv)
     app.initialize("Choreonoid-ROS", "Choreonoid");
     ProjectManager::instance()->loadBuiltinProject(":/Base/project/layout.cnoid");
 
-    auto rosPlugin = PluginManager::instance()->findPlugin("ROS");
+    auto pm = PluginManager::instance();
+    auto rosPlugin = pm->findPlugin("ROS");
     if(!rosPlugin){
-        cerr << "ROS plugin is not found." << endl;
+        auto& errorMessage = pm->getErrorMessage("ROS");
+        if(errorMessage.empty()){
+            cerr << "ROS plugin is not found." << endl;
+        } else {
+            cerr << "ROS plugin cannot be loaded.\n";
+            cerr << errorMessage << endl;
+        }
         return 1;
     }
     if(!rosPlugin->isActive()){

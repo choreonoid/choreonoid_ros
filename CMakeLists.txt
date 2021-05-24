@@ -23,8 +23,6 @@ find_package(catkin REQUIRED COMPONENTS
   angles
   )
 
-# find_package(Qt5 COMPONENTS Widgets REQUIRED)
-
 catkin_package(SKIP_CMAKE_CONFIG_GENERATION SKIP_PKG_CONFIG_GENERATION)
 
 if(CHOREONOID_CXX_STANDARD)
@@ -34,17 +32,6 @@ else()
   add_compile_options(-std=c++14)
 endif()
 
-if(CHOREONOID_COMPILE_DEFINITIONS)
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS ${CHOREONOID_COMPILE_DEFINITIONS})
-endif()
-
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${CHOREONOID_INCLUDE_DIRS}
-)
-
-link_directories(
-  ${CHOREONOID_LIBRARY_DIRS}
-  )
+include_directories(${catkin_INCLUDE_DIRS})
 
 add_subdirectory(src)

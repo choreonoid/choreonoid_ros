@@ -28,8 +28,12 @@ target_link_libraries(${target}
   ${std_msgs_LIBRARIES}
   ${sensor_msgs_LIBRARIES}
   ${image_transport_LIBRARIES}
-  ${CHOREONOID_BODY_PLUGIN_LIBRARIES}
-  ${catkin_LIBRARIES}
+  # <<<<<<< HEAD
+  #   ${CHOREONOID_BODY_PLUGIN_LIBRARIES}
+  #   ${catkin_LIBRARIES}
+  # =======
+  Choreonoid::CnoidBodyPlugin
+  # >>>>>>> choreonoid/master
   )
 
 if(CHOREONOID_ENABLE_PYTHON)

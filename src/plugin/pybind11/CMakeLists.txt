@@ -1,2 +1,2 @@
 choreonoid_add_python_module(PyROSPlugin PyROSPlugin.cpp)
-target_link_libraries(PyROSPlugin CnoidROSPlugin ${CHOREONOID_PYTHON_LIBRARIES})
+target_link_libraries(PyROSPlugin CnoidROSPlugin Choreonoid::CnoidPyBase)

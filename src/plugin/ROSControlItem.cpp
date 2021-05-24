@@ -155,9 +155,10 @@ bool ROSControlItem::control(void)
   rbt_hw_sim_->write(now, period);
 
   manager_->update(now, period, false);
-
   
   time_ = io_->currentTime();
+
+  return true;
 }
 
 void ROSControlItem::output(void)

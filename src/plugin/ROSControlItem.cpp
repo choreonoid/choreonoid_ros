@@ -93,7 +93,7 @@ bool ROSControlItem::initialize(ControllerIO* io)
     return false;
   }
 
-  // Copy elements to the local arfuments //
+  // Copy elements to the local arguments //
   io_ = io;
   body_ = io->body();
   tstep_ = io->worldTimeStep();

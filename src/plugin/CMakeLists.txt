@@ -3,8 +3,8 @@ set(target CnoidROSPlugin)
 choreonoid_make_gettext_mo_files(${target} mofiles)
 
 # RobotHW inherited ros_control Choreonoid interface class #
-add_library(RobotHWCnoid robot_hw_cnoid.cpp)
-target_link_libraries(RobotHWCnoid ${catkin_LIBRARIES} ${CHOREONOID_BODY_LIBRARIES} ${CHOREONOID_BODY_PLUGIN_LIBRARIES})
+add_library(RobotHWCnoid robot_hw_sim.h robot_hw_cnoid.cpp)
+target_link_libraries(RobotHWCnoid ${catkin_LIBRARIES} Choreonoid::CnoidBody Choreonoid::CnoidBodyPlugin)
 
 install(TARGETS RobotHWCnoid
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

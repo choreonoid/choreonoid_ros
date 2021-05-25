@@ -61,7 +61,6 @@ class ROSControlItem : public ControllerItem
   std::shared_ptr<pluginlib::ClassLoader<hardware_interface::RobotHWSim<cnoid::ControllerIO*>>> rbt_hw_sim_loader_;
   boost::shared_ptr<hardware_interface::RobotHWSim<cnoid::ControllerIO*>> rbt_hw_sim_;
   std::shared_ptr<controller_manager::ControllerManager> manager_;
-  std::vector<std::string> controller_names_;
   
   std::string namespace_{""};
 

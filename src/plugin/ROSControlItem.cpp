@@ -3,9 +3,6 @@
 /////////////////////////////////
 
 #include "ROSControlItem.h"
-#include <controller_manager_msgs/UnloadController.h>
-#include <controller_manager_msgs/LoadController.h>
-#include <controller_manager_msgs/ListControllers.h>
 #include <cnoid/MessageView>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/BodyItem>
@@ -37,7 +34,7 @@ ROSControlItem::ROSControlItem(const ROSControlItem& org) : ControllerItem(org)
 
 ROSControlItem::~ROSControlItem()
 {
-  stop();
+  //stop();
 }
 
 Item* ROSControlItem::doDuplicate(void) const
@@ -104,20 +101,25 @@ bool ROSControlItem::initialize(ControllerIO* io)
 
   try {
     // ros plugin loader //
-    rbt_hw_sim_loader_ = make_shared<pluginlib::ClassLoader<RobotHWSim<cnoid::ControllerIO*>>>("choreonoid_ros", "hardware_interface::RobotHWSim<cnoid::ControllerIO*>");
+    if(!rbt_hw_sim_loader_)
+      rbt_hw_sim_loader_ = make_shared<pluginlib::ClassLoader<RobotHWSim<cnoid::ControllerIO*>>>("choreonoid_ros", "hardware_interface::RobotHWSim<cnoid::ControllerIO*>");
     
     // load RobotHWCnoid plugin
-    rbt_hw_sim_ = rbt_hw_sim_loader_->createInstance("hardware_interface/RobotHWCnoid");
+    if(!rbt_hw_sim_) {
+      rbt_hw_sim_ = rbt_hw_sim_loader_->createInstance("hardware_interface/RobotHWCnoid");
     
-    // load hardware_interface  //
-    if(!rbt_hw_sim_->initSim(nh_, io_)) {
-      ss.str("");
-      ss << "Could not initialize robot simulation interface" << endl;
-      MessageView::instance()->put(ss.str(), MessageView::Error);
+      // load hardware_interface  //
+      if(!rbt_hw_sim_->initSim(nh_, io_)) {
+        ss.str("");
+        ss << "Could not initialize robot simulation interface" << endl;
+        MessageView::instance()->put(ss.str(), MessageView::Error);
+      }
     }
 
     // register ros control manager //
-    manager_ = make_shared<controller_manager::ControllerManager>(rbt_hw_sim_.get(), nh_);
+    if(!manager_)
+      manager_ = make_shared<controller_manager::ControllerManager>(rbt_hw_sim_.get(), nh_);
+    
   } catch(pluginlib::LibraryLoadException &ex) {
     ss.str("");
     ss << "Failed to create robot simulation interface loader : " << ex.what() << endl;
@@ -133,13 +135,14 @@ bool ROSControlItem::initialize(ControllerIO* io)
 }
 
 bool ROSControlItem::start(void)
-{
+{  
   return true;
 }
 
 void ROSControlItem::input(void)
 {
 }
+
 bool ROSControlItem::control(void)
 {
   int last_sec = static_cast<int>(time_);

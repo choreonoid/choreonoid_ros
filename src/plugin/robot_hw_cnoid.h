@@ -61,7 +61,7 @@ private:
   };
 
   bool loadURDF(const std::string& param_name = "robot_description");
-  bool registerJointLimits(const uint& i);
+  bool registerJointLimits(const unsigned int& i);
 
   // arguments //
   ros::NodeHandle nh_;
@@ -95,7 +95,7 @@ private:
   joint_limits_interface::EffortJointSaturationInterface ej_sat_if_;
   joint_limits_interface::EffortJointSoftLimitsInterface ej_lim_if_;
 
-  uint dof_{ 0 };
+  unsigned int dof_{ 0 };
   std::vector<std::string> joint_names_;
   std::vector<ControlType> ctrl_types_;
   std::vector<Data> data_;

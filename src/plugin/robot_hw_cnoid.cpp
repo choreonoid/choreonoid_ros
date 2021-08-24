@@ -38,7 +38,7 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
   joint_types_.resize(dof_);
   limits_.resize(dof_);
 
-  unordered_map<string, uint> if_map;
+  unordered_map<string, unsigned int> if_map;
   if_map["PositionJointInterface"] = ControlType::POSITION;
   if_map["VelocityJointInterface"] = ControlType::VELOCITY;
   if_map["EffortJointInterface"] = ControlType::EFFORT;
@@ -47,7 +47,7 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
   if_map["hardware_interface/EffortJointInterface"] = ControlType::EFFORT;
 
   // Initialize values
-  for (uint i = 0; i < dof_; i++)
+  for (unsigned int i = 0; i < dof_; i++)
   {
     // Get joint_interfaces and check them //
     vector<string> joint_ifs = tmss_[i].joints_[0].hardware_interfaces_;
@@ -118,7 +118,6 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
           pj_if_.registerHandle(joint_handle_);
           break;
         case Link::JOINT_VELOCITY:
-        case Link::JOINT_SURFACE_VELOCITY:
           ctrl_types_[i] = ControlType::VELOCITY;
           joint_handle_ = hi::JointHandle(js_if_.getHandle(joint_names_[i]), &command_[i].velocity);
           vj_if_.registerHandle(joint_handle_);
@@ -216,7 +215,7 @@ bool RobotHWCnoid::loadURDF(const std::string& param_name)
   return true;
 }
 
-bool RobotHWCnoid::registerJointLimits(const uint& i)
+bool RobotHWCnoid::registerJointLimits(const unsigned int& i)
 {
   using namespace std;
   using namespace cnoid;
@@ -353,7 +352,7 @@ bool RobotHWCnoid::registerJointLimits(const uint& i)
 
 void RobotHWCnoid::read(const ros::Time& time, const ros::Duration& period)
 {
-  for (uint i = 0; i < dof_; i++)
+  for (unsigned int i = 0; i < dof_; i++)
   {
     double position = links_[i]->q();
     if (joint_types_[i] == urdf::Joint::PRISMATIC)
@@ -375,7 +374,7 @@ void RobotHWCnoid::write(const ros::Time& time, const ros::Duration& period)
   ej_sat_if_.enforceLimits(period);
   ej_lim_if_.enforceLimits(period);
 
-  for (uint i = 0; i < dof_; i++)
+  for (unsigned int i = 0; i < dof_; i++)
   {
     switch (ctrl_types_[i])
     {

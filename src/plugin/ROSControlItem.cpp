@@ -24,7 +24,7 @@ void ROSControlItem::initializeClass(ExtensionManager* ext)
   ext->itemManager().addCreationPanel<ROSControlItem>();
 }
 
-ROSControlItem::ROSControlItem(void)
+ROSControlItem::ROSControlItem()
 {
   io_ = nullptr;
 }
@@ -39,7 +39,7 @@ ROSControlItem::~ROSControlItem()
   // stop();
 }
 
-Item* ROSControlItem::doDuplicate(void) const
+Item* ROSControlItem::doDuplicate() const
 {
   return new ROSControlItem(*this);
 }
@@ -159,16 +159,16 @@ bool ROSControlItem::initialize(ControllerIO* io)
   return true;
 }
 
-bool ROSControlItem::start(void)
+bool ROSControlItem::start()
 {
   return true;
 }
 
-void ROSControlItem::input(void)
+void ROSControlItem::input()
 {
 }
 
-bool ROSControlItem::control(void)
+bool ROSControlItem::control()
 {
   int last_sec = static_cast<int>(time_);
   double last_nsec = (time_ - last_sec) * 1e9;
@@ -189,11 +189,11 @@ bool ROSControlItem::control(void)
   return true;
 }
 
-void ROSControlItem::output(void)
+void ROSControlItem::output()
 {
 }
 
-void ROSControlItem::stop(void)
+void ROSControlItem::stop()
 {
 }
 

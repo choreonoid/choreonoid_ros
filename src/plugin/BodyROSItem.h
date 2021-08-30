@@ -21,6 +21,8 @@
 #include <sensor_msgs/LaserScan.h>
 #include <geometry_msgs/WrenchStamped.h>
 
+#include <pcl_ros/point_cloud.h>
+
 #include <image_transport/image_transport.h>
 
 #include <vector>

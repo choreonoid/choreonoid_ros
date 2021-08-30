@@ -208,7 +208,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             if(sensor->numPitchSamples() > 1){
                 std::string name = sensor->name();
                 std::replace(name.begin(), name.end(), '-', '_');
-                range_sensor_pc_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud>(name + "/point_cloud", 1);
+                range_sensor_pc_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
                 sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::update3DRangeSensor,
                                                               this, sensor, range_sensor_pc_publishers_[i]));
                 ROS_DEBUG("Create 3d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
@@ -411,36 +411,37 @@ void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publish
 
 void BodyROSItem::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
 {
-    sensor_msgs::PointCloud range;
-    // Header Info
-    range.header.stamp.fromSec(io->currentTime());
-    range.header.frame_id = sensor->name();
+    pcl::PointCloud<pcl::PointXYZ> lidar;
 
-    // Calculate Point Cloud data
     const int numPitchSamples = sensor->numPitchSamples();
     const double pitchStep = sensor->pitchStep();
     const int numYawSamples = sensor->numYawSamples();
     const double yawStep = sensor->yawStep();
-        
+
     for(int pitch=0; pitch < numPitchSamples; ++pitch){
         const double pitchAngle = pitch * pitchStep - sensor->pitchRange() / 2.0;
         const double cosPitchAngle = cos(pitchAngle);
         const int srctop = pitch * numYawSamples;
-            
+
         for(int yaw=0; yaw < numYawSamples; ++yaw){
-            const double distance = sensor->rangeData()[srctop + yaw];
+            const RangeSensor::RangeData& src = sensor->constRangeData();
+            const double distance = src[srctop + yaw];
             if(distance <= sensor->maxDistance()){
+                pcl::PointXYZ point;
                 double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
-                geometry_msgs::Point32 point;
                 point.x = distance *  cosPitchAngle * sin(-yawAngle);
-                point.y = distance * sin(pitchAngle);
-                point.z = -distance * cosPitchAngle * cos(-yawAngle);
-                range.points.push_back(point);
+                point.y  = distance * sin(pitchAngle);
+                point.z  = -distance * cosPitchAngle * cos(yawAngle);
+                lidar.points.push_back(point);
             }
         }
     }
 
-    publisher.publish(range);
+    auto msg = lidar.makeShared();
+    msg->header.frame_id = sensor->name();
+    pcl_conversions::toPCL(ros::Time(io->currentTime()), msg->header.stamp);
+
+    publisher.publish(msg);
 }
 
 

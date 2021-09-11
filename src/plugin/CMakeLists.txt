@@ -6,6 +6,7 @@ choreonoid_add_plugin(${target}
   ROSPlugin.cpp
   WorldROSItem.cpp
   BodyROSItem.cpp
+  DiffDriveControllerItem.cpp
   deprecated/BodyPublisherItem.cpp
   ${mofiles}
   )

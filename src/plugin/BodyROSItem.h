@@ -20,11 +20,14 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/LaserScan.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <std_srvs/SetBool.h>
 
 #include <image_transport/image_transport.h>
 
-#include <vector>
 #include <fstream>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "exportdecl.h"
 
@@ -101,6 +104,14 @@ private:
     std::vector<ros::Publisher> range_sensor_publishers_;
     std::vector<ros::Publisher> range_sensor_pc_publishers_;
 
+    std::vector<ros::ServiceServer> force_sensor_switch_servers_;
+    std::vector<ros::ServiceServer> rate_gyro_sensor_switch_servers_;
+    std::vector<ros::ServiceServer> accel_sensor_switch_servers_;
+    std::vector<ros::ServiceServer> vision_sensor_switch_servers_;
+    std::vector<ros::ServiceServer> range_vision_sensor_switch_servers_;
+    std::vector<ros::ServiceServer> range_sensor_switch_servers_;
+    std::vector<ros::ServiceServer> range_sensor_pc_switch_servers_;
+
     void updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher);
     void updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher);
     void updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher);
@@ -108,6 +119,10 @@ private:
     void updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher);
     void updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher);
     void update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher);
+
+    bool switchDevice(std_srvs::SetBoolRequest &request,
+                      std_srvs::SetBoolResponse &response,
+                      Device* sensor);
 
     /**
       @brief Stop publish.

@@ -152,103 +152,104 @@ void BodyROSItem::createSensors(BodyPtr body)
     force_sensor_publishers_.reserve(forceSensors_.size());
     force_sensor_switch_servers_.clear();
     force_sensor_switch_servers_.reserve(forceSensors_.size());
-    for (size_t i=0; i < forceSensors_.size(); ++i) {
-        if (ForceSensor* sensor = forceSensors_[i]) {
-            std::string name = sensor->name();
-            std::replace(name.begin(), name.end(), '-', '_');
-            force_sensor_publishers_.push_back(
-                rosnode_->advertise<geometry_msgs::WrenchStamped>(name, 1));
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateForceSensor,
-                                                          this, sensor, force_sensor_publishers_[i]));
-            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
-            force_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-            ROS_INFO("Create force sensor %s", sensor->name().c_str());
-        }
+    for (ForceSensorPtr sensor : forceSensors_) {
+        std::string name = sensor->name();
+        std::replace(name.begin(), name.end(), '-', '_');
+        const ros::Publisher publisher
+            = rosnode_->advertise<geometry_msgs::WrenchStamped>(name, 1);
+        sensor->sigStateChanged().connect(
+            boost::bind(&BodyROSItem::updateForceSensor,
+                        this, sensor, publisher));
+        force_sensor_publishers_.push_back(publisher);
+        boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
+            = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+        force_sensor_switch_servers_.push_back(
+            rosnode_->advertiseService(name + "/set_enabled", requestCallback));
+        ROS_INFO("Create force sensor %s", sensor->name().c_str());
     }
     rate_gyro_sensor_publishers_.clear();
     rate_gyro_sensor_publishers_.reserve(gyroSensors_.size());
     rate_gyro_sensor_switch_servers_.clear();
     rate_gyro_sensor_switch_servers_.reserve(gyroSensors_.size());
-    for (size_t i=0; i < gyroSensors_.size(); ++i) {
-        if (RateGyroSensor* sensor = gyroSensors_[i]) {
-            std::string name = sensor->name();
-            std::replace(name.begin(), name.end(), '-', '_');
-            rate_gyro_sensor_publishers_.push_back(
-                rosnode_->advertise<sensor_msgs::Imu>(name, 1));
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRateGyroSensor,
-                                                          this, sensor, rate_gyro_sensor_publishers_[i]));
-            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
-            rate_gyro_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-            ROS_INFO("Create gyro sensor %s", sensor->name().c_str());
-        }
+    for (RateGyroSensorPtr sensor : gyroSensors_) {
+        std::string name = sensor->name();
+        std::replace(name.begin(), name.end(), '-', '_');
+        const ros::Publisher publisher
+            = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
+        sensor->sigStateChanged().connect(
+            boost::bind(&BodyROSItem::updateRateGyroSensor,
+                        this, sensor, publisher));
+        rate_gyro_sensor_publishers_.push_back(publisher);
+        boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
+            = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+        rate_gyro_sensor_switch_servers_.push_back(
+            rosnode_->advertiseService(name + "/set_enabled", requestCallback));
+        ROS_INFO("Create gyro sensor %s", sensor->name().c_str());
     }
     accel_sensor_publishers_.clear();
     accel_sensor_publishers_.reserve(accelSensors_.size());
     accel_sensor_switch_servers_.clear();
     accel_sensor_switch_servers_.reserve(accelSensors_.size());
-    for (size_t i=0; i < accelSensors_.size(); ++i) {
-        if (AccelerationSensor* sensor = accelSensors_[i]) {
-            std::string name = sensor->name();
-            std::replace(name.begin(), name.end(), '-', '_');
-            accel_sensor_publishers_.push_back(
-                rosnode_->advertise<sensor_msgs::Imu>(name, 1));
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateAccelSensor,
-                                                          this, sensor, accel_sensor_publishers_[i]));
-            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
-            accel_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-            ROS_INFO("Create accel sensor %s", sensor->name().c_str());
-        }
+    for (AccelerationSensorPtr sensor : accelSensors_) {
+        std::string name = sensor->name();
+        std::replace(name.begin(), name.end(), '-', '_');
+        const ros::Publisher publisher
+            = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
+        sensor->sigStateChanged().connect(
+            boost::bind(&BodyROSItem::updateAccelSensor,
+                        this, sensor, publisher));
+        accel_sensor_publishers_.push_back(publisher);
+        boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
+            = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+        accel_sensor_switch_servers_.push_back(
+            rosnode_->advertiseService(name + "/set_enabled", requestCallback));
+        ROS_INFO("Create accel sensor %s", sensor->name().c_str());
     }
     image_transport::ImageTransport it(*rosnode_);
     vision_sensor_publishers_.clear();
     vision_sensor_publishers_.reserve(visionSensors_.size());
     vision_sensor_switch_servers_.clear();
     vision_sensor_switch_servers_.reserve(visionSensors_.size());
-    for (size_t i=0; i < visionSensors_.size(); ++i) {
-        if (Camera* sensor = visionSensors_[i]) {
-            std::string name = sensor->name();
-            std::replace(name.begin(), name.end(), '-', '_');
-            vision_sensor_publishers_.push_back(
-                it.advertise(name + "/image_raw", 1));
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateVisionSensor,
-                                                          this, sensor, vision_sensor_publishers_[i]));
-            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
-            vision_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-            ROS_INFO("Create RGB camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
-        }
+    for (CameraPtr sensor : visionSensors_) {
+        std::string name = sensor->name();
+        std::replace(name.begin(), name.end(), '-', '_');
+        const image_transport::Publisher publisher
+            = it.advertise(name + "/image_raw", 1);
+        sensor->sigStateChanged().connect(
+            boost::bind(&BodyROSItem::updateVisionSensor,
+                        this, sensor, publisher));
+        vision_sensor_publishers_.push_back(publisher);
+        boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
+            = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+        vision_sensor_switch_servers_.push_back(
+            rosnode_->advertiseService(name + "/set_enabled", requestCallback));
+        ROS_INFO("Create RGB camera %s (%f Hz)",
+                 sensor->name().c_str(), sensor->frameRate());
     }
     range_vision_sensor_publishers_.clear();
     range_vision_sensor_publishers_.reserve(rangeVisionSensors_.size());
     range_vision_sensor_switch_servers_.clear();
     range_vision_sensor_switch_servers_.reserve(rangeVisionSensors_.size());
-    for (size_t i=0; i < rangeVisionSensors_.size(); ++i) {
-        if (RangeCamera* sensor = rangeVisionSensors_[i]) {
-            std::string name = sensor->name();
-            std::replace(name.begin(), name.end(), '-', '_');
-            range_vision_sensor_publishers_.push_back(
-                rosnode_->advertise<sensor_msgs::PointCloud2>(name + "/point_cloud", 1));
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeVisionSensor,
-                                                          this, sensor, range_vision_sensor_publishers_[i]));
-            // adds a server only for the camera whose type is COLOR_DEPTH or POINT_CLOUD.
-            // Without this exception, a new service server may be a duplicate
-            // of one added to 'vision_sensor_switch_servers_'.
-            if (sensor->imageType() == Camera::NO_IMAGE) {
-                boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                    = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
-                range_vision_sensor_switch_servers_.push_back(
-                    rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-                ROS_INFO("Create depth camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
-            } else {
-                ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
-            }
+    for (RangeCameraPtr sensor : rangeVisionSensors_) {
+        std::string name = sensor->name();
+        std::replace(name.begin(), name.end(), '-', '_');
+        const ros::Publisher publisher = rosnode_->advertise<
+            sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
+        sensor->sigStateChanged().connect(
+            boost::bind(&BodyROSItem::updateRangeVisionSensor,
+                        this, sensor, publisher));
+        range_vision_sensor_publishers_.push_back(publisher);
+        // adds a server only for the camera whose type is COLOR_DEPTH or POINT_CLOUD.
+        // Without this exception, a new service server may be a duplicate
+        // of one added to 'vision_sensor_switch_servers_'.
+        if (sensor->imageType() == Camera::NO_IMAGE) {
+            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
+                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+            range_vision_sensor_switch_servers_.push_back(
+                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
+            ROS_INFO("Create depth camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
+        } else {
+            ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
         }
     }
     range_sensor_publishers_.clear();
@@ -259,34 +260,37 @@ void BodyROSItem::createSensors(BodyPtr body)
     range_sensor_pc_publishers_.reserve(rangeSensors_.size());
     range_sensor_pc_switch_servers_.clear();
     range_sensor_pc_switch_servers_.reserve(rangeSensors_.size());
-    for (size_t i=0; i < rangeSensors_.size(); ++i) {
-        if (RangeSensor* sensor = rangeSensors_[i]) {
-            if(sensor->numPitchSamples() > 1){
-                std::string name = sensor->name();
-                std::replace(name.begin(), name.end(), '-', '_');
-                range_sensor_pc_publishers_.push_back(
-                    rosnode_->advertise<sensor_msgs::PointCloud>(name + "/point_cloud", 1));
-                sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::update3DRangeSensor,
-                                                              this, sensor, range_sensor_pc_publishers_[i]));
-                boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                    = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
-                range_sensor_pc_switch_servers_.push_back(
-                    rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-                ROS_DEBUG("Create 3d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
-            }
-            else{
-                std::string name = sensor->name();
-                std::replace(name.begin(), name.end(), '-', '_');
-                range_sensor_publishers_.push_back(
-                    rosnode_->advertise<sensor_msgs::LaserScan>(name + "/scan", 1));
-                sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeSensor,
-                                                              this, sensor, range_sensor_publishers_[i]));
-                boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                    = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
-                range_sensor_switch_servers_.push_back(
-                    rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-                ROS_DEBUG("Create 2d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
-            }
+    for (RangeSensorPtr sensor : rangeSensors_) {
+        if (sensor->numPitchSamples() > 1) {
+            std::string name = sensor->name();
+            std::replace(name.begin(), name.end(), '-', '_');
+            const ros::Publisher publisher = rosnode_->advertise<
+                sensor_msgs::PointCloud>(name + "/point_cloud", 1);
+            sensor->sigStateChanged().connect(
+                boost::bind(&BodyROSItem::update3DRangeSensor,
+                            this, sensor, publisher));
+            range_sensor_pc_publishers_.push_back(publisher);
+            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
+                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+            range_sensor_pc_switch_servers_.push_back(
+                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
+            ROS_INFO("Create 3d range sensor %s (%f Hz)",
+                     sensor->name().c_str(), sensor->scanRate());
+        } else {
+            std::string name = sensor->name();
+            std::replace(name.begin(), name.end(), '-', '_');
+            const ros::Publisher publisher
+                = rosnode_->advertise<sensor_msgs::LaserScan>(name + "/scan", 1);
+            sensor->sigStateChanged().connect(
+                boost::bind(&BodyROSItem::updateRangeSensor,
+                            this, sensor, publisher));
+            range_sensor_publishers_.push_back(publisher);
+            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
+                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+            range_sensor_switch_servers_.push_back(
+                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
+            ROS_INFO("Create 2d range sensor %s (%f Hz)",
+                     sensor->name().c_str(), sensor->scanRate());
         }
     }
 }

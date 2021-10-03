@@ -32,7 +32,12 @@ int main(int argc, char** argv)
     char** rosargv = &rosargs.front();
     ros::init(rosargc, rosargv, "choreonoid", ros::init_options::NoSigintHandler);
 
-    ros::master::setRetryTimeout(ros::WallDuration(1));
+    // The setRetryTimeout function does not seem to affect the check function.
+    // The following code is currently disabled because there seems no special reason
+    // to use it other than to specify the timeout for the check function.
+    //
+    // ros::master::setRetryTimeout(ros::WallDuration(1));
+    
     if(!ros::master::check()){
         cerr << "Choreonoid's ROS node cannot be invoked because the ROS master is not found." << endl;
         return 1;
@@ -64,10 +69,10 @@ int main(int argc, char** argv)
         return 1;
     }
     
-    app.exec();
+    int returnCode = app.exec();
 
     ros::requestShutdown();
     ros::waitForShutdown();
 
-    return 0;
+    return returnCode;
 }

@@ -161,7 +161,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                 = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
             force_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/switch", requestCallback));
+                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
             ROS_INFO("Create force sensor %s", sensor->name().c_str());
         }
     }
@@ -178,7 +178,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                 = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
             rate_gyro_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/switch", requestCallback));
+                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
             ROS_INFO("Create gyro sensor %s", sensor->name().c_str());
         }
     }
@@ -195,7 +195,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                 = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
             accel_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/switch", requestCallback));
+                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
             ROS_INFO("Create accel sensor %s", sensor->name().c_str());
         }
     }
@@ -213,7 +213,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                 = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
             vision_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/switch", requestCallback));
+                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
             ROS_INFO("Create RGB camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
         }
     }
@@ -234,7 +234,7 @@ void BodyROSItem::createSensors(BodyPtr body)
                 boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                     = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
                 range_vision_sensor_switch_servers_.push_back(
-                    rosnode_->advertiseService(name + "/switch", requestCallback));
+                    rosnode_->advertiseService(name + "/set_enabled", requestCallback));
                 ROS_INFO("Create depth camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
             } else {
                 ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
@@ -258,7 +258,7 @@ void BodyROSItem::createSensors(BodyPtr body)
                 boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                     = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
                 range_sensor_pc_switch_servers_.push_back(
-                    rosnode_->advertiseService(name + "/switch", requestCallback));
+                    rosnode_->advertiseService(name + "/set_enabled", requestCallback));
                 ROS_DEBUG("Create 3d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
             }
             else{
@@ -270,7 +270,7 @@ void BodyROSItem::createSensors(BodyPtr body)
                 boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                     = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
                 range_sensor_switch_servers_.push_back(
-                    rosnode_->advertiseService(name + "/switch", requestCallback));
+                    rosnode_->advertiseService(name + "/set_enabled", requestCallback));
                 ROS_DEBUG("Create 2d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
             }
         } 

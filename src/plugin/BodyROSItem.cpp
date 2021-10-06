@@ -305,6 +305,9 @@ bool BodyROSItem::control()
 
 void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher)
 {
+    if(!sensor->on()){
+        return;
+    }
     geometry_msgs::WrenchStamped force;
     force.header.stamp.fromSec(io->currentTime());
     force.header.frame_id = sensor->name();
@@ -320,6 +323,9 @@ void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publish
 
 void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher)
 {
+    if(!sensor->on()){
+        return;
+    }
     sensor_msgs::Imu gyro;
     gyro.header.stamp.fromSec(io->currentTime());
     gyro.header.frame_id = sensor->name();
@@ -332,6 +338,9 @@ void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& p
 
 void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher)
 {
+    if(!sensor->on()){
+        return;
+    }
     sensor_msgs::Imu accel;
     accel.header.stamp.fromSec(io->currentTime());
     accel.header.frame_id = sensor->name();
@@ -344,6 +353,9 @@ void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& 
 
 void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher)
 {
+    if(!sensor->on()){
+        return;
+    }
     sensor_msgs::Image vision;
     vision.header.stamp.fromSec(io->currentTime());
     vision.header.frame_id = sensor->name();
@@ -366,6 +378,9 @@ void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher&
 
 void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher)
 {
+    if(!sensor->on()){
+        return;
+    }
     sensor_msgs::PointCloud2 range;
     range.header.stamp.fromSec(io->currentTime());
     range.header.frame_id = sensor->name();
@@ -436,6 +451,9 @@ void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& p
 
 void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
 {
+    if(!sensor->on()){
+        return;
+    }
     sensor_msgs::LaserScan range;
     range.header.stamp.fromSec(io->currentTime());
     range.header.frame_id = sensor->name();
@@ -463,6 +481,9 @@ void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publish
 
 void BodyROSItem::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
 {
+    if(!sensor->on()){
+        return;
+    }
     sensor_msgs::PointCloud range;
     // Header Info
     range.header.stamp.fromSec(io->currentTime());

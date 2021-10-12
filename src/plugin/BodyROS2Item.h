@@ -121,8 +121,8 @@ private:
     void updateRangeSensor(RangeSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher);
     void update3DRangeSensor(RangeSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr publisher);
 
-    bool switchDevice(std_srvs::srv::SetBool::Request &request,
-                      std_srvs::srv::SetBool::Response &response,
+    void switchDevice(std_srvs::srv::SetBool::Request::ConstSharedPtr request,
+                      std_srvs::srv::SetBool::Response::SharedPtr response,
                       Device* sensor);
     builtin_interfaces::msg::Time getStampMsgFromSec(double sec);
 

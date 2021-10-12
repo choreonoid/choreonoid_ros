@@ -135,6 +135,9 @@ bool BodyROS2Item::start()
 
 void BodyROS2Item::createSensors(BodyPtr body)
 {
+  using SetBoolCallback = std::function<void (
+      const std::shared_ptr<std_srvs::srv::SetBool::Request>,
+      std::shared_ptr<std_srvs::srv::SetBool::Response>)>;
     DeviceList<> devices = body->devices();
 
     forceSensors_.assign(devices.extract<ForceSensor>());
@@ -163,10 +166,10 @@ void BodyROS2Item::createSensors(BodyPtr body)
             force_sensor_publishers_[i] = node_->create_publisher<geometry_msgs::msg::WrenchStamped>(name, 1);
             sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::updateForceSensor,
                                                           this, sensor, force_sensor_publishers_[i]));
-            auto requestCallback = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+            SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             force_sensor_switch_servers_.push_back(
                 node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
-            RCLCPP_INFO(node_->get_logger(),"Create force sensor %s", sensor->name().c_str());
+             RCLCPP_INFO(node_->get_logger(),"Create force sensor %s", sensor->name().c_str());
         }
     }
     rate_gyro_sensor_publishers_.resize(gyroSensors_.size());
@@ -179,8 +182,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
             rate_gyro_sensor_publishers_[i] = node_->create_publisher<sensor_msgs::msg::Imu>(name, 1);
             sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::updateRateGyroSensor,
                                                           this, sensor, rate_gyro_sensor_publishers_[i]));
-            std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
-                = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+            SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             rate_gyro_sensor_switch_servers_.push_back(
                 node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
             RCLCPP_INFO(node_->get_logger(),"Create gyro sensor %s", sensor->name().c_str());
@@ -196,8 +198,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
             accel_sensor_publishers_[i] = node_->create_publisher<sensor_msgs::msg::Imu>(name, 1);
             sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::updateAccelSensor,
                                                           this, sensor, accel_sensor_publishers_[i]));
-            std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
-                = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+            SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             accel_sensor_switch_servers_.push_back(
                 node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
             RCLCPP_INFO(node_->get_logger(),"Create accel sensor %s", sensor->name().c_str());
@@ -216,8 +217,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
             vision_sensor_publishers_[i] = cam_publisher;
             sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::updateVisionSensor,
                                                           this, sensor, vision_sensor_publishers_[i]));
-            std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
-                = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+            SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             vision_sensor_switch_servers_.push_back(
                 node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
             RCLCPP_INFO(node_->get_logger(),"Create RGB camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
@@ -237,8 +237,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
             // Without this exception, a new service server may be a duplicate
             // of one added to 'vision_sensor_switch_servers_'.
             if (sensor->imageType() == Camera::NO_IMAGE) {
-                std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
-                    = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+              SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
                 range_vision_sensor_switch_servers_.push_back(
                     node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
                 RCLCPP_INFO(node_->get_logger(),"Create depth camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
@@ -261,8 +260,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
                 range_sensor_pc_publishers_[i] = node_->create_publisher<sensor_msgs::msg::PointCloud>(name + "/point_cloud", 1);
                 sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::update3DRangeSensor,
                                                               this, sensor, range_sensor_pc_publishers_[i]));
-                std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
-                    = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+                SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
                 range_sensor_pc_switch_servers_.push_back(
                     node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
                 RCLCPP_DEBUG(node_->get_logger(),"Create 3d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
@@ -273,8 +271,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
                 range_sensor_publishers_[i] = node_->create_publisher<sensor_msgs::msg::LaserScan>(name + "/scan", 1);
                 sensor->sigStateChanged().connect( std::bind(&BodyROS2Item::updateRangeSensor,
                                                               this, sensor, range_sensor_publishers_[i]));
-                std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
-                    = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+                SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
                 range_sensor_switch_servers_.push_back(
                     node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
                 RCLCPP_DEBUG(node_->get_logger(),"Create 2d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
@@ -573,13 +570,12 @@ void BodyROS2Item::output()
 //}
 
 
-bool BodyROS2Item::switchDevice(std_srvs::srv::SetBool::Request& request,
-                               std_srvs::srv::SetBool::Response& response,
+void BodyROS2Item::switchDevice(std_srvs::srv::SetBool::Request::ConstSharedPtr request,
+                               std_srvs::srv::SetBool::Response::SharedPtr response,
                                Device* sensor)
 {
-    sensor->on(request.data);
-    response.success = (request.data == sensor->on());
-    return true;
+    sensor->on(request->data);
+    response->success = (request->data == sensor->on());
 }
 
 

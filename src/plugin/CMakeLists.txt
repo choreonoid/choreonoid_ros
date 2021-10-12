@@ -1,4 +1,4 @@
-set(target CnoidROSPlugin)
+set(target CnoidROS2Plugin)
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 
@@ -11,7 +11,7 @@ choreonoid_add_plugin(${target}
   )
 
 target_link_libraries(${target}
-  ${roscpp_LIBRARIES}
+  ${rclcpp_LIBRARIES}
   ${std_msgs_LIBRARIES}
   ${sensor_msgs_LIBRARIES}
   ${image_transport_LIBRARIES}

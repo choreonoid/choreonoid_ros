@@ -6,14 +6,14 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT WorldROSItem : public Item
+class CNOID_EXPORT WorldROS2Item : public Item
 {
 public:
     static void initializeClass(ExtensionManager* ext);
 
-    WorldROSItem();
-    WorldROSItem(const WorldROSItem& org);
-    virtual ~WorldROSItem();
+    WorldROS2Item();
+    WorldROS2Item(const WorldROS2Item & org);
+    virtual ~WorldROS2Item();
     void setMaxClockPublishingRate(double rate);
 
 protected:
@@ -28,7 +28,7 @@ private:
     Impl* impl;
 };
 
-typedef ref_ptr<WorldROSItem> WorldROSItemPtr;
+typedef ref_ptr<WorldROS2Item> WorldROSItemPtr;
 
 }
 

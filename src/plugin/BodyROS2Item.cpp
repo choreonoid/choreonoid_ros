@@ -1,4 +1,4 @@
-#include "BodyROSItem.h"
+#include "BodyROS2Item.h"
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
@@ -17,14 +17,14 @@ using namespace cnoid;
 using fmt::format;
 
 
-void BodyROSItem::initializeClass(ExtensionManager* ext)
+void BodyROS2Item::initializeClass(ExtensionManager* ext)
 { 
-    ext->itemManager().registerClass<BodyROSItem>(N_("BodyROSItem"));
-    ext->itemManager().addCreationPanel<BodyROSItem>();
+    ext->itemManager().registerClass<BodyROS2Item>(N_("BodyROS2Item"));
+    ext->itemManager().addCreationPanel<BodyROS2Item>();
 }
 
 
-BodyROSItem::BodyROSItem() :
+BodyROS2Item::BodyROS2Item() :
     os(MessageView::instance()->cout())
 {
     io = nullptr;
@@ -32,7 +32,7 @@ BodyROSItem::BodyROSItem() :
 }
 
 
-BodyROSItem::BodyROSItem(const BodyROSItem& org) :
+BodyROS2Item::BodyROS2Item(const BodyROS2Item& org) :
     ControllerItem(org),
     os(MessageView::instance()->cout())
 {
@@ -41,19 +41,19 @@ BodyROSItem::BodyROSItem(const BodyROSItem& org) :
 }
 
 
-BodyROSItem::~BodyROSItem()
+BodyROS2Item::~BodyROS2Item()
 {
     stop();
 }
 
 
-Item* BodyROSItem::doDuplicate() const
+Item* BodyROS2Item::doDuplicate() const
 {
-    return new BodyROSItem(*this);
+    return new BodyROS2Item(*this);
 }
 
 
-bool BodyROSItem::store(Archive& archive)
+bool BodyROS2Item::store(Archive& archive)
 {
     archive.write("body_ros_version", 0);
     archive.write("joint_state_update_rate", joint_state_update_rate_);
@@ -62,7 +62,7 @@ bool BodyROSItem::store(Archive& archive)
 }
 
 
-bool BodyROSItem::restore(const Archive& archive)
+bool BodyROS2Item::restore(const Archive& archive)
 {
     if(!archive.read("joint_state_update_rate", joint_state_update_rate_)){
         archive.read("jointStateUpdateRate", joint_state_update_rate_); // old
@@ -71,17 +71,17 @@ bool BodyROSItem::restore(const Archive& archive)
 }
 
 
-void BodyROSItem::doPutProperties(PutPropertyFunction& putProperty)
+void BodyROS2Item::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty.decimals(2).min(0.0)("Update rate", joint_state_update_rate_, changeProperty(joint_state_update_rate_));
 }
 
 
-bool BodyROSItem::initialize(ControllerIO* io)
+bool BodyROS2Item::initialize(ControllerIO* io)
 {
     if (!io->body()) {
         MessageView::instance()->putln(
-            format(_("BodyROSItem \"{0}\" is invalid because it is not assigned to a body."), displayName()),
+            format(_("BodyROS2Item \"{0}\" is invalid because it is not assigned to a body."), displayName()),
             MessageView::WARNING);
         return false;
     }
@@ -95,7 +95,7 @@ bool BodyROSItem::initialize(ControllerIO* io)
 }
 
 
-bool BodyROSItem::start()
+bool BodyROS2Item::start()
 {
     // buffer of preserve currently state of joints.
     joint_state_.header.stamp.fromSec(controlTime_);
@@ -128,7 +128,7 @@ bool BodyROSItem::start()
 }
 
 
-void BodyROSItem::createSensors(BodyPtr body)
+void BodyROS2Item::createSensors(BodyPtr body)
 {
     DeviceList<> devices = body->devices();
 
@@ -156,10 +156,10 @@ void BodyROSItem::createSensors(BodyPtr body)
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
             force_sensor_publishers_[i] = rosnode_->advertise<geometry_msgs::WrenchStamped>(name, 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateForceSensor,
+            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateForceSensor,
                                                           this, sensor, force_sensor_publishers_[i]));
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+                = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             force_sensor_switch_servers_.push_back(
                 rosnode_->advertiseService(name + "/set_enabled", requestCallback));
             ROS_INFO("Create force sensor %s", sensor->name().c_str());
@@ -173,10 +173,10 @@ void BodyROSItem::createSensors(BodyPtr body)
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
             rate_gyro_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRateGyroSensor,
+            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateRateGyroSensor,
                                                           this, sensor, rate_gyro_sensor_publishers_[i]));
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+                = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             rate_gyro_sensor_switch_servers_.push_back(
                 rosnode_->advertiseService(name + "/set_enabled", requestCallback));
             ROS_INFO("Create gyro sensor %s", sensor->name().c_str());
@@ -190,10 +190,10 @@ void BodyROSItem::createSensors(BodyPtr body)
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
             accel_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateAccelSensor,
+            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateAccelSensor,
                                                           this, sensor, accel_sensor_publishers_[i]));
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+                = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             accel_sensor_switch_servers_.push_back(
                 rosnode_->advertiseService(name + "/set_enabled", requestCallback));
             ROS_INFO("Create accel sensor %s", sensor->name().c_str());
@@ -208,10 +208,10 @@ void BodyROSItem::createSensors(BodyPtr body)
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
             vision_sensor_publishers_[i] = it.advertise(name + "/image_raw", 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateVisionSensor,
+            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateVisionSensor,
                                                           this, sensor, vision_sensor_publishers_[i]));
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+                = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             vision_sensor_switch_servers_.push_back(
                 rosnode_->advertiseService(name + "/set_enabled", requestCallback));
             ROS_INFO("Create RGB camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
@@ -225,14 +225,14 @@ void BodyROSItem::createSensors(BodyPtr body)
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
             range_vision_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeVisionSensor,
+            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateRangeVisionSensor,
                                                           this, sensor, range_vision_sensor_publishers_[i]));
             // adds a server only for the camera whose type is COLOR_DEPTH or POINT_CLOUD.
             // Without this exception, a new service server may be a duplicate
             // of one added to 'vision_sensor_switch_servers_'.
             if (sensor->imageType() == Camera::NO_IMAGE) {
                 boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                    = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+                    = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
                 range_vision_sensor_switch_servers_.push_back(
                     rosnode_->advertiseService(name + "/set_enabled", requestCallback));
                 ROS_INFO("Create depth camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
@@ -253,10 +253,10 @@ void BodyROSItem::createSensors(BodyPtr body)
                 std::string name = sensor->name();
                 std::replace(name.begin(), name.end(), '-', '_');
                 range_sensor_pc_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud>(name + "/point_cloud", 1);
-                sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::update3DRangeSensor,
+                sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::update3DRangeSensor,
                                                               this, sensor, range_sensor_pc_publishers_[i]));
                 boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                    = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+                    = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
                 range_sensor_pc_switch_servers_.push_back(
                     rosnode_->advertiseService(name + "/set_enabled", requestCallback));
                 ROS_DEBUG("Create 3d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
@@ -265,10 +265,10 @@ void BodyROSItem::createSensors(BodyPtr body)
                 std::string name = sensor->name();
                 std::replace(name.begin(), name.end(), '-', '_');
                 range_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::LaserScan>(name + "/scan", 1);
-                sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeSensor,
+                sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateRangeSensor,
                                                               this, sensor, range_sensor_publishers_[i]));
                 boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                    = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+                    = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
                 range_sensor_switch_servers_.push_back(
                     rosnode_->advertiseService(name + "/set_enabled", requestCallback));
                 ROS_DEBUG("Create 2d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
@@ -278,7 +278,7 @@ void BodyROSItem::createSensors(BodyPtr body)
 }
 
 
-bool BodyROSItem::control()
+bool BodyROS2Item::control()
 {
     controlTime_ = io->currentTime();
     double updateSince = controlTime_ - joint_state_last_update_;
@@ -303,7 +303,7 @@ bool BodyROSItem::control()
 }
 
 
-void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher)
 {
     if(!sensor->on()){
         return;
@@ -321,7 +321,7 @@ void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publish
 }
 
 
-void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher)
 {
     if(!sensor->on()){
         return;
@@ -336,7 +336,7 @@ void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& p
 }
 
 
-void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher)
 {
     if(!sensor->on()){
         return;
@@ -351,7 +351,7 @@ void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& 
 }
 
 
-void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher)
+void BodyROS2Item::updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher)
 {
     if(!sensor->on()){
         return;
@@ -376,7 +376,7 @@ void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher&
 }
 
 
-void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher)
 {
     if(!sensor->on()){
         return;
@@ -449,7 +449,7 @@ void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& p
 }
 
 
-void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
 {
     if(!sensor->on()){
         return;
@@ -479,7 +479,7 @@ void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publish
 }
 
 
-void BodyROSItem::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
 {
     if(!sensor->on()){
         return;
@@ -517,19 +517,19 @@ void BodyROSItem::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publi
 }
 
 
-void BodyROSItem::input()
+void BodyROS2Item::input()
 {
   
 }
 
 
-void BodyROSItem::output()
+void BodyROS2Item::output()
 {
   
 }
 
 
-void BodyROSItem::stop_publish()
+void BodyROS2Item::stop_publish()
 {
     size_t i;
 
@@ -565,7 +565,7 @@ void BodyROSItem::stop_publish()
 }
 
 
-bool BodyROSItem::switchDevice(std_srvs::SetBoolRequest& request,
+bool BodyROS2Item::switchDevice(std_srvs::SetBoolRequest& request,
                                std_srvs::SetBoolResponse& response,
                                Device* sensor)
 {
@@ -575,7 +575,7 @@ bool BodyROSItem::switchDevice(std_srvs::SetBoolRequest& request,
 }
 
 
-void BodyROSItem::stop()
+void BodyROS2Item::stop()
 {
     if (ros::ok()) {
         stop_publish();

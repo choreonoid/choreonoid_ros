@@ -1,5 +1,5 @@
-#ifndef CNOID_ROS_PLUGIN_BODY_ROS_ITEM_H
-#define CNOID_ROS_PLUGIN_BODY_ROS_ITEM_H
+#ifndef CNOID_ROS2_PLUGIN_BODY_ROS2_ITEM_H
+#define CNOID_ROS2_PLUGIN_BODY_ROS2_ITEM_H
 
 #include <cnoid/ControllerItem>
 #include <cnoid/BasicSensorSimulationHelper>
@@ -33,14 +33,14 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT BodyROSItem : public ControllerItem
+class CNOID_EXPORT BodyROS2Item : public ControllerItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
     
-    BodyROSItem();
-    BodyROSItem(const BodyROSItem& org);
-    virtual ~BodyROSItem();
+    BodyROS2Item();
+    BodyROS2Item(const BodyROS2Item& org);
+    virtual ~BodyROS2Item();
     void createSensors(BodyPtr body);
     
     virtual bool initialize(ControllerIO* io) override;
@@ -126,12 +126,12 @@ private:
 
     /**
       @brief Stop publish.
-      This method call from BodyROSItem::stop.
+      This method call from BodyROS2Item::stop.
      */
     void stop_publish();
 };
 
-typedef ref_ptr<BodyROSItem> BodyROSItemPtr;
+typedef ref_ptr<BodyROS2Item> BodyROS2ItemPtr;
 }
 
 #endif

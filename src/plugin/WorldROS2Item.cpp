@@ -6,27 +6,27 @@
    should be improved to avoid this problem.
 */
 
-#include "WorldROSItem.h"
-#include <cnoid/ItemManager>
-#include <cnoid/WorldItem>
-#include <cnoid/SimulationBar>
-#include <cnoid/SimulatorItem>
-#include <cnoid/PutPropertyFunction>
+#include "WorldROS2Item.h"
+#include "gettext.h"
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
+#include <cnoid/ItemManager>
+#include <cnoid/PutPropertyFunction>
+#include <cnoid/SimulationBar>
+#include <cnoid/SimulatorItem>
+#include <cnoid/WorldItem>
 #include <ros/ros.h>
 #include <rosgraph_msgs/Clock.h>
-#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 
 namespace cnoid {
 
-class WorldROSItem::Impl
+class WorldROS2Item::Impl
 {
 public:
-    WorldROSItem* self;
+  WorldROS2Item * self;
     WorldItem* worldItem;
     ScopedConnection simulationBarConnection;
     SimulatorItem* currentSimulatorItem;
@@ -38,8 +38,8 @@ public:
     double clockPublishingInterval;
     double nextClockPublishingTime;
     
-    Impl(WorldROSItem* self);
-    Impl(WorldROSItem* self, const Impl& org);
+    Impl(WorldROS2Item * self);
+    Impl(WorldROS2Item * self, const Impl& org);
     ~Impl();
     void initialize();
     void initializeWorld(WorldItem* worldItem);
@@ -55,35 +55,31 @@ public:
 
 }
 
-void WorldROSItem::initializeClass(ExtensionManager* ext)
+void WorldROS2Item::initializeClass(ExtensionManager* ext)
 {
-    ext->itemManager().registerClass<WorldROSItem>(N_("WorldROSItem"));
-    ext->itemManager().addCreationPanel<WorldROSItem>();
+    ext->itemManager().registerClass<WorldROS2Item>(N_("WorldROS2Item"));
+    ext->itemManager().addCreationPanel<WorldROS2Item>();
 }
 
-
-WorldROSItem::WorldROSItem()
+WorldROS2Item::WorldROS2Item()
 {
     impl = new Impl(this);
 }
 
-
-WorldROSItem::Impl::Impl(WorldROSItem* self)
+WorldROS2Item::Impl::Impl(WorldROS2Item * self)
     : self(self)
 {
     maxClockPublishingRate = 100.0;
     initialize();
 }
 
-
-WorldROSItem::WorldROSItem(const WorldROSItem& org)
+WorldROS2Item::WorldROS2Item(const WorldROS2Item & org)
     : Item(org)
 {
     impl = new Impl(this, *org.impl);
 }
 
-
-WorldROSItem::Impl::Impl(WorldROSItem* self, const Impl& org)
+WorldROS2Item::Impl::Impl(WorldROS2Item * self, const Impl& org)
     : self(self)
 {
     maxClockPublishingRate = org.maxClockPublishingRate;
@@ -91,7 +87,7 @@ WorldROSItem::Impl::Impl(WorldROSItem* self, const Impl& org)
 }
 
 
-void WorldROSItem::Impl::initialize()
+void WorldROS2Item::Impl::initialize()
 {
     simulationBarConnection =
         SimulationBar::instance()->sigSimulationAboutToStart().connect(
@@ -99,27 +95,25 @@ void WorldROSItem::Impl::initialize()
                 onSimulationAboutToStart(simulatorItem); });
 }
 
-
-WorldROSItem::~WorldROSItem()
+WorldROS2Item::~WorldROS2Item()
 {
     delete impl;
 }
 
-
-WorldROSItem::Impl::~Impl()
+WorldROS2Item::Impl::~Impl()
 {
     clearCurrentSimulatorItem();
     clearWorld();
 }
 
 
-Item* WorldROSItem::doDuplicate() const
+Item*WorldROS2Item::doDuplicate() const
 {
-    return new WorldROSItem(*this);
+    return new WorldROS2Item(*this);
 }
 
 
-void WorldROSItem::onPositionChanged()
+void WorldROS2Item::onPositionChanged()
 {
     WorldItem* worldItem = nullptr;
     if(isConnectedToRoot()){
@@ -134,7 +128,7 @@ void WorldROSItem::onPositionChanged()
 }
 
 
-void WorldROSItem::Impl::initializeWorld(WorldItem* worldItem)
+void WorldROS2Item::Impl::initializeWorld(WorldItem* worldItem)
 {
     clearWorld();
 
@@ -148,7 +142,7 @@ void WorldROSItem::Impl::initializeWorld(WorldItem* worldItem)
 }
 
 
-void WorldROSItem::Impl::initializeClockPublisher()
+void WorldROS2Item::Impl::initializeClockPublisher()
 {
     if(rosNode){
         clockPublisher.shutdown();
@@ -159,14 +153,14 @@ void WorldROSItem::Impl::initializeClockPublisher()
 }
 
 
-void WorldROSItem::setMaxClockPublishingRate(double rate)
+void WorldROS2Item::setMaxClockPublishingRate(double rate)
 {
     impl->maxClockPublishingRate = rate;
     impl->initializeClockPublisher();
 }
 
 
-void WorldROSItem::Impl::clearWorld()
+void WorldROS2Item::Impl::clearWorld()
 {
     if(rosNode){
         rosNode.reset();
@@ -175,7 +169,7 @@ void WorldROSItem::Impl::clearWorld()
 }
 
 
-void WorldROSItem::Impl::onSimulationAboutToStart(SimulatorItem* simulatorItem)
+void WorldROS2Item::Impl::onSimulationAboutToStart(SimulatorItem* simulatorItem)
 {
     if(worldItem && worldItem == simulatorItem->findOwnerItem<WorldItem>()){
         if(simulatorItem != currentSimulatorItem){
@@ -187,7 +181,7 @@ void WorldROSItem::Impl::onSimulationAboutToStart(SimulatorItem* simulatorItem)
 }
 
 
-void WorldROSItem::Impl::setCurrentSimulatorItem(SimulatorItem* simulatorItem)
+void WorldROS2Item::Impl::setCurrentSimulatorItem(SimulatorItem* simulatorItem)
 {
     clearCurrentSimulatorItem();
     currentSimulatorItem = simulatorItem;
@@ -202,14 +196,14 @@ void WorldROSItem::Impl::setCurrentSimulatorItem(SimulatorItem* simulatorItem)
 }
 
 
-void WorldROSItem::Impl::clearCurrentSimulatorItem()
+void WorldROS2Item::Impl::clearCurrentSimulatorItem()
 {
     currentSimulatorItemConnections.disconnect();
     currentSimulatorItem = nullptr;
 }
 
 
-void WorldROSItem::Impl::onSimulationStarted()
+void WorldROS2Item::Impl::onSimulationStarted()
 {
     clockPublishingInterval = 1.0 / maxClockPublishingRate;
     nextClockPublishingTime = 0.0;
@@ -219,7 +213,7 @@ void WorldROSItem::Impl::onSimulationStarted()
 }
 
 
-void WorldROSItem::Impl::onSimulationStep()
+void WorldROS2Item::Impl::onSimulationStep()
 {
     double time = currentSimulatorItem->simulationTime();
     
@@ -233,7 +227,7 @@ void WorldROSItem::Impl::onSimulationStep()
 }
 
 
-void WorldROSItem::doPutProperties(PutPropertyFunction& putProperty)
+void WorldROS2Item::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty.decimals(2).min(0.0)
         (_("Max clock publishing rate"), impl->maxClockPublishingRate,
@@ -241,14 +235,14 @@ void WorldROSItem::doPutProperties(PutPropertyFunction& putProperty)
 }
 
 
-bool WorldROSItem::store(Archive& archive)
+bool WorldROS2Item::store(Archive& archive)
 {
     archive.write("max_clock_publishing_rate", impl->maxClockPublishingRate);
     return true;
 }
 
 
-bool WorldROSItem::restore(const Archive& archive)
+bool WorldROS2Item::restore(const Archive& archive)
 {
     archive.read("max_clock_publishing_rate", impl->maxClockPublishingRate);
     return true;

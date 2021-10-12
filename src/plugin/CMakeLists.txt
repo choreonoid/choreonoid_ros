@@ -3,9 +3,9 @@ set(target CnoidROSPlugin)
 choreonoid_make_gettext_mo_files(${target} mofiles)
 
 choreonoid_add_plugin(${target}
-  ROSPlugin.cpp
-  WorldROSItem.cpp
-  BodyROSItem.cpp
+        ROS2Plugin.cpp
+        WorldROS2Item.cpp
+        BodyROS2Item.cpp
   deprecated/BodyPublisherItem.cpp
   ${mofiles}
   )

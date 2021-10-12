@@ -5,9 +5,8 @@
 #include <cnoid/Plugin>
 #include <cnoid/ExecutablePath>
 #include <cnoid/FileUtil>
-#include <ros/init.h>
-#include <ros/master.h>
-#include <ros/spinner.h>
+#include <rclcpp/rclcpp.hpp>
+#include "../plugin/ROS2Plugin.hpp"
 #include <regex>
 #include <cstdlib>
 
@@ -30,16 +29,16 @@ int main(int argc, char** argv)
 
     int rosargc = rosargs.size();
     char** rosargv = &rosargs.front();
-    ros::init(rosargc, rosargv, "choreonoid", ros::init_options::NoSigintHandler);
+    rclcpp::init(rosargc, rosargv);
+//    ros::init(rosargc, rosargv, "choreonoid", ros::init_options::NoSigintHandler);
 
-    ros::master::setRetryTimeout(ros::WallDuration(1));
-    if(!ros::master::check()){
-        cerr << "Choreonoid's ROS node cannot be invoked because the ROS master is not found." << endl;
-        return 1;
-    }
-    std::unique_ptr<ros::AsyncSpinner> spinner;
-    spinner.reset(new ros::AsyncSpinner(0));
-    spinner->start();
+//    ros::master::setRetryTimeout(ros::WallDuration(1));
+
+
+
+//    std::unique_ptr<ros::AsyncSpinner> spinner;
+//    spinner.reset(new ros::AsyncSpinner(0));
+//    spinner->start();
 
     argc = args.size();
     argv = &args.front();
@@ -48,26 +47,34 @@ int main(int argc, char** argv)
     ProjectManager::instance()->loadBuiltinProject(":/Base/project/layout.cnoid");
 
     auto pm = PluginManager::instance();
-    auto rosPlugin = pm->findPlugin("ROS2");
-    if(!rosPlugin){
+    auto ros2PluginRaw = pm->findPlugin("ROS2");
+    ROS2Plugin *ros2Plugin = static_cast<ROS2Plugin*>(ros2PluginRaw);
+
+    if(!ros2Plugin){
         auto& errorMessage = pm->getErrorMessage("ROS2");
         if(errorMessage.empty()){
-            cerr << "ROS plugin is not found." << endl;
+            cerr << "ROS2 plugin is not found." << endl;
         } else {
-            cerr << "ROS plugin cannot be loaded.\n";
+            cerr << "ROS2 plugin cannot be loaded.\n";
             cerr << errorMessage << endl;
         }
         return 1;
     }
-    if(!rosPlugin->isActive()){
+
+    using rclcpp::executors::MultiThreadedExecutor;
+    MultiThreadedExecutor executor;
+    std::shared_ptr<rclcpp::Node> node;
+    node.reset(ros2Plugin);
+    executor.add_node(node);
+
+    if(!ros2Plugin->isActive()){
         cerr << "ROS2 plugin is not active." << endl;
         return 1;
     }
     
     app.exec();
 
-    ros::requestShutdown();
-    ros::waitForShutdown();
+    rclcpp::shutdown();
 
     return 0;
 }

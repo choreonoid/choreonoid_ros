@@ -11,18 +11,18 @@
 #include <cnoid/RangeSensor>
 #include <cnoid/Archive>
 
-#include <ros/ros.h>
-#include <sensor_msgs/JointState.h>
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/LaserScan.h>
-#include <geometry_msgs/WrenchStamped.h>
-#include <std_srvs/SetBool.h>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/image.hpp>
+//#include <sensor_msgs/msg/image_encodings.hpp>
+#include <sensor_msgs/msg/point_cloud.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
+#include <geometry_msgs/msg/wrench_stamped.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 
-#include <image_transport/image_transport.h>
+#include <image_transport/image_transport.hpp>
 
 #include <fstream>
 #include <memory>
@@ -44,6 +44,7 @@ public:
     void createSensors(BodyPtr body);
     
     virtual bool initialize(ControllerIO* io) override;
+    void initilizeROS2(std::shared_ptr<rclcpp::Node> node);
     virtual bool start() override;
     virtual double timeStep() const override {
       return timeStep_;
@@ -82,8 +83,8 @@ private:
     double timeStep_;
 
     /* joint states */
-    sensor_msgs::JointState joint_state_;
-    ros::Publisher joint_state_publisher_;
+    sensor_msgs::msg::JointState joint_state_;
+    std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::JointState>> joint_state_publisher_;
     double joint_state_update_rate_;
     double joint_state_update_period_;
     double joint_state_last_update_;
@@ -94,41 +95,42 @@ private:
 
     std::string bodyName;
 
-    std::unique_ptr<ros::NodeHandle> rosnode_;
+    std::shared_ptr<rclcpp::Node> node_;
  
-    std::vector<ros::Publisher> force_sensor_publishers_;
-    std::vector<ros::Publisher> rate_gyro_sensor_publishers_;
-    std::vector<ros::Publisher> accel_sensor_publishers_;
-    std::vector<image_transport::Publisher> vision_sensor_publishers_;
-    std::vector<ros::Publisher> range_vision_sensor_publishers_;
-    std::vector<ros::Publisher> range_sensor_publishers_;
-    std::vector<ros::Publisher> range_sensor_pc_publishers_;
+    std::vector<rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr> force_sensor_publishers_;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> rate_gyro_sensor_publishers_;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> accel_sensor_publishers_;
+    std::vector<std::shared_ptr<image_transport::CameraPublisher>> vision_sensor_publishers_;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr> range_vision_sensor_publishers_;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr> range_sensor_publishers_;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr> range_sensor_pc_publishers_;
 
-    std::vector<ros::ServiceServer> force_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> rate_gyro_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> accel_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> vision_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> range_vision_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> range_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> range_sensor_pc_switch_servers_;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> force_sensor_switch_servers_;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> rate_gyro_sensor_switch_servers_;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> accel_sensor_switch_servers_;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> vision_sensor_switch_servers_;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> range_vision_sensor_switch_servers_;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> range_sensor_switch_servers_;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> range_sensor_pc_switch_servers_;
 
-    void updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher);
-    void updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher);
-    void updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher);
-    void updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher);
-    void updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher);
-    void updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher);
-    void update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher);
+    void updateForceSensor(ForceSensor* sensor, rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr publisher);
+    void updateRateGyroSensor(RateGyroSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
+    void updateAccelSensor(AccelerationSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
+    void updateVisionSensor(Camera* sensor, std::shared_ptr<image_transport::CameraPublisher> publisher);
+    void updateRangeVisionSensor(RangeCamera* sensor, rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher);
+    void updateRangeSensor(RangeSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher);
+    void update3DRangeSensor(RangeSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr publisher);
 
-    bool switchDevice(std_srvs::SetBoolRequest &request,
-                      std_srvs::SetBoolResponse &response,
+    bool switchDevice(std_srvs::srv::SetBool::Request &request,
+                      std_srvs::srv::SetBool::Response &response,
                       Device* sensor);
+    builtin_interfaces::msg::Time getStampMsgFromSec(double sec);
 
     /**
       @brief Stop publish.
       This method call from BodyROS2Item::stop.
      */
-    void stop_publish();
+//    void stop_publish();
 };
 
 typedef ref_ptr<BodyROS2Item> BodyROS2ItemPtr;

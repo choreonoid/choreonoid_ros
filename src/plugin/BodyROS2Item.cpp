@@ -5,16 +5,18 @@
 #include <cnoid/Sensor>
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
-#include <ros/console.h>
-#include <geometry_msgs/Point32.h>
+//#include <ros/console.h>
+#include <geometry_msgs/msg/point32.hpp>
 #include <fmt/format.h>
 #include "gettext.h"
 
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
+//#include <boost/bind.hpp>
+//#include <boost/function.hpp>
 
 using namespace cnoid;
 using fmt::format;
+using std::placeholders::_1;
+using std::placeholders::_2;
 
 
 void BodyROS2Item::initializeClass(ExtensionManager* ext)
@@ -24,8 +26,7 @@ void BodyROS2Item::initializeClass(ExtensionManager* ext)
 }
 
 
-BodyROS2Item::BodyROS2Item() :
-    os(MessageView::instance()->cout())
+BodyROS2Item::BodyROS2Item() : os(MessageView::instance()->cout())
 {
     io = nullptr;
     joint_state_update_rate_ = 100.0;
@@ -94,11 +95,15 @@ bool BodyROS2Item::initialize(ControllerIO* io)
     return true;
 }
 
+void BodyROS2Item::initilizeROS2(std::shared_ptr<rclcpp::Node> node)
+{
+  node_ = node;
+}
 
 bool BodyROS2Item::start()
 {
     // buffer of preserve currently state of joints.
-    joint_state_.header.stamp.fromSec(controlTime_);
+    joint_state_.header.stamp = getStampMsgFromSec(controlTime_);
     joint_state_.name.resize(body()->numAllJoints());
     joint_state_.position.resize(body()->numAllJoints());
     joint_state_.velocity.resize(body()->numAllJoints());
@@ -116,13 +121,13 @@ bool BodyROS2Item::start()
 
     std::string name = simulationBody->name();
     std::replace(name.begin(), name.end(), '-', '_');
-    rosnode_.reset(new ros::NodeHandle(name));
     createSensors(simulationBody);
 
-    joint_state_publisher_     = rosnode_->advertise<sensor_msgs::JointState>("joint_states", 1000);
+    joint_state_publisher_ = node_->create_publisher<sensor_msgs::msg::JointState>("joint_states", 1000);
     joint_state_update_period_ = 1.0 / joint_state_update_rate_;
     joint_state_last_update_   = io->currentTime();
-    ROS_DEBUG("Joint state update rate %f", joint_state_update_rate_);
+//    ROS_DEBUG("Joint state update rate %f", joint_state_update_rate_);
+    RCLCPP_DEBUG(node_->get_logger(),"Joint state update rate %f", joint_state_update_rate_);
 
     return true;
 }
@@ -155,14 +160,13 @@ void BodyROS2Item::createSensors(BodyPtr body)
         if (ForceSensor* sensor = forceSensors_[i]) {
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
-            force_sensor_publishers_[i] = rosnode_->advertise<geometry_msgs::WrenchStamped>(name, 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateForceSensor,
+            force_sensor_publishers_[i] = node_->create_publisher<geometry_msgs::msg::WrenchStamped>(name, 1);
+            sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::updateForceSensor,
                                                           this, sensor, force_sensor_publishers_[i]));
-            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+            auto requestCallback = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             force_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-            ROS_INFO("Create force sensor %s", sensor->name().c_str());
+                node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
+            RCLCPP_INFO(node_->get_logger(),"Create force sensor %s", sensor->name().c_str());
         }
     }
     rate_gyro_sensor_publishers_.resize(gyroSensors_.size());
@@ -172,14 +176,14 @@ void BodyROS2Item::createSensors(BodyPtr body)
         if (RateGyroSensor* sensor = gyroSensors_[i]) {
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
-            rate_gyro_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateRateGyroSensor,
+            rate_gyro_sensor_publishers_[i] = node_->create_publisher<sensor_msgs::msg::Imu>(name, 1);
+            sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::updateRateGyroSensor,
                                                           this, sensor, rate_gyro_sensor_publishers_[i]));
-            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+            std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
+                = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             rate_gyro_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-            ROS_INFO("Create gyro sensor %s", sensor->name().c_str());
+                node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
+            RCLCPP_INFO(node_->get_logger(),"Create gyro sensor %s", sensor->name().c_str());
         }
     }
     accel_sensor_publishers_.resize(accelSensors_.size());
@@ -189,17 +193,17 @@ void BodyROS2Item::createSensors(BodyPtr body)
         if (AccelerationSensor* sensor = accelSensors_[i]) {
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
-            accel_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateAccelSensor,
+            accel_sensor_publishers_[i] = node_->create_publisher<sensor_msgs::msg::Imu>(name, 1);
+            sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::updateAccelSensor,
                                                           this, sensor, accel_sensor_publishers_[i]));
-            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+            std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
+                = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             accel_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-            ROS_INFO("Create accel sensor %s", sensor->name().c_str());
+                node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
+            RCLCPP_INFO(node_->get_logger(),"Create accel sensor %s", sensor->name().c_str());
         }
     }
-    image_transport::ImageTransport it(*rosnode_);
+    image_transport::ImageTransport it(node_);
     vision_sensor_publishers_.resize(visionSensors_.size());
     vision_sensor_switch_servers_.clear();
     vision_sensor_switch_servers_.reserve(visionSensors_.size());
@@ -207,14 +211,16 @@ void BodyROS2Item::createSensors(BodyPtr body)
         if (Camera* sensor = visionSensors_[i]) {
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
-            vision_sensor_publishers_[i] = it.advertise(name + "/image_raw", 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateVisionSensor,
+            std::shared_ptr<image_transport::CameraPublisher> cam_publisher;
+            *cam_publisher = image_transport::create_camera_publisher(node_.get(), name + "/image_raw");
+            vision_sensor_publishers_[i] = cam_publisher;
+            sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::updateVisionSensor,
                                                           this, sensor, vision_sensor_publishers_[i]));
-            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+            std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
+                = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             vision_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-            ROS_INFO("Create RGB camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
+                node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
+            RCLCPP_INFO(node_->get_logger(),"Create RGB camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
         }
     }
     range_vision_sensor_publishers_.resize(rangeVisionSensors_.size());
@@ -224,20 +230,20 @@ void BodyROS2Item::createSensors(BodyPtr body)
         if (RangeCamera* sensor = rangeVisionSensors_[i]) {
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
-            range_vision_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
-            sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateRangeVisionSensor,
+            range_vision_sensor_publishers_[i] = node_->create_publisher<sensor_msgs::msg::PointCloud2>(name + "/point_cloud", 1);
+            sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::updateRangeVisionSensor,
                                                           this, sensor, range_vision_sensor_publishers_[i]));
             // adds a server only for the camera whose type is COLOR_DEPTH or POINT_CLOUD.
             // Without this exception, a new service server may be a duplicate
             // of one added to 'vision_sensor_switch_servers_'.
             if (sensor->imageType() == Camera::NO_IMAGE) {
-                boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                    = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+                std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
+                    = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
                 range_vision_sensor_switch_servers_.push_back(
-                    rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-                ROS_INFO("Create depth camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
+                    node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
+                RCLCPP_INFO(node_->get_logger(),"Create depth camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
             } else {
-                ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
+                RCLCPP_INFO(node_->get_logger(),"Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
             }
         }
     }
@@ -252,26 +258,26 @@ void BodyROS2Item::createSensors(BodyPtr body)
             if(sensor->numPitchSamples() > 1){
                 std::string name = sensor->name();
                 std::replace(name.begin(), name.end(), '-', '_');
-                range_sensor_pc_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud>(name + "/point_cloud", 1);
-                sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::update3DRangeSensor,
+                range_sensor_pc_publishers_[i] = node_->create_publisher<sensor_msgs::msg::PointCloud>(name + "/point_cloud", 1);
+                sensor->sigStateChanged().connect(std::bind(&BodyROS2Item::update3DRangeSensor,
                                                               this, sensor, range_sensor_pc_publishers_[i]));
-                boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                    = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+                std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
+                    = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
                 range_sensor_pc_switch_servers_.push_back(
-                    rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-                ROS_DEBUG("Create 3d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
+                    node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
+                RCLCPP_DEBUG(node_->get_logger(),"Create 3d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
             }
             else{
                 std::string name = sensor->name();
                 std::replace(name.begin(), name.end(), '-', '_');
-                range_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::LaserScan>(name + "/scan", 1);
-                sensor->sigStateChanged().connect(boost::bind(&BodyROS2Item::updateRangeSensor,
+                range_sensor_publishers_[i] = node_->create_publisher<sensor_msgs::msg::LaserScan>(name + "/scan", 1);
+                sensor->sigStateChanged().connect( std::bind(&BodyROS2Item::updateRangeSensor,
                                                               this, sensor, range_sensor_publishers_[i]));
-                boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                    = boost::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
+                std::function<bool (std_srvs::srv::SetBool::Request&, std_srvs::srv::SetBool::Response&)> requestCallback
+                    = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
                 range_sensor_switch_servers_.push_back(
-                    rosnode_->advertiseService(name + "/set_enabled", requestCallback));
-                ROS_DEBUG("Create 2d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
+                    node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled", requestCallback));
+                RCLCPP_DEBUG(node_->get_logger(),"Create 2d range sensor %s (%f Hz)", sensor->name().c_str(), sensor->scanRate());
             }
         } 
     }
@@ -285,7 +291,7 @@ bool BodyROS2Item::control()
 
     if (updateSince > joint_state_update_period_) {
         // publish current joint states
-        joint_state_.header.stamp.fromSec(controlTime_);
+        joint_state_.header.stamp = getStampMsgFromSec(controlTime_);
 
         for (int i = 0; i < body()->numAllJoints(); i++) {
             Link* joint = body()->joint(i);
@@ -295,7 +301,7 @@ bool BodyROS2Item::control()
             joint_state_.effort[i]   = joint->u();
         }
 
-        joint_state_publisher_.publish(joint_state_);
+        joint_state_publisher_->publish(joint_state_);
         joint_state_last_update_ += joint_state_update_period_;
     }
 
@@ -303,13 +309,13 @@ bool BodyROS2Item::control()
 }
 
 
-void BodyROS2Item::updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateForceSensor(ForceSensor* sensor, rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr publisher)
 {
     if(!sensor->on()){
         return;
     }
-    geometry_msgs::WrenchStamped force;
-    force.header.stamp.fromSec(io->currentTime());
+    geometry_msgs::msg::WrenchStamped force;
+    force.header.stamp = getStampMsgFromSec(io->currentTime());
     force.header.frame_id = sensor->name();
     force.wrench.force.x = sensor->F()[0] / 1000.0;
     force.wrench.force.y = sensor->F()[1] / 1000.0;
@@ -317,72 +323,74 @@ void BodyROS2Item::updateForceSensor(ForceSensor* sensor, ros::Publisher& publis
     force.wrench.torque.x = sensor->F()[3] / 1000.0;
     force.wrench.torque.y = sensor->F()[4] / 1000.0;
     force.wrench.torque.z = sensor->F()[5] / 1000.0;
-    publisher.publish(force);
+    publisher->publish(force);
 }
 
 
-void BodyROS2Item::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateRateGyroSensor(RateGyroSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher)
 {
     if(!sensor->on()){
         return;
     }
-    sensor_msgs::Imu gyro;
-    gyro.header.stamp.fromSec(io->currentTime());
+    sensor_msgs::msg::Imu gyro;
+    gyro.header.stamp = getStampMsgFromSec(io->currentTime());
     gyro.header.frame_id = sensor->name();
     gyro.angular_velocity.x = sensor->w()[0];
     gyro.angular_velocity.y = sensor->w()[1];
     gyro.angular_velocity.z = sensor->w()[2];
-    publisher.publish(gyro);
+    publisher->publish(gyro);
 }
 
 
-void BodyROS2Item::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateAccelSensor(AccelerationSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher)
 {
     if(!sensor->on()){
         return;
     }
-    sensor_msgs::Imu accel;
-    accel.header.stamp.fromSec(io->currentTime());
+    sensor_msgs::msg::Imu accel;
+    accel.header.stamp = getStampMsgFromSec(io->currentTime());
     accel.header.frame_id = sensor->name();
     accel.linear_acceleration.x = sensor->dv()[0] / 10.0;
     accel.linear_acceleration.y = sensor->dv()[1] / 10.0;
     accel.linear_acceleration.z = sensor->dv()[2] / 10.0;
-    publisher.publish(accel);
+    publisher->publish(accel);
 }
 
 
-void BodyROS2Item::updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher)
+void BodyROS2Item::updateVisionSensor(Camera* sensor, std::shared_ptr<image_transport::CameraPublisher> publisher)
 {
     if(!sensor->on()){
         return;
     }
-    sensor_msgs::Image vision;
-    vision.header.stamp.fromSec(io->currentTime());
+    sensor_msgs::msg::Image vision;
+    vision.header.stamp = getStampMsgFromSec(io->currentTime());
     vision.header.frame_id = sensor->name();
     vision.height = sensor->image().height();
     vision.width = sensor->image().width();
     if (sensor->image().numComponents() == 3)
-        vision.encoding = sensor_msgs::image_encodings::RGB8;
+        vision.encoding = "rgb8";
     else if (sensor->image().numComponents() == 1)
-        vision.encoding = sensor_msgs::image_encodings::MONO8;
+        vision.encoding = "mono8";
     else {
-        ROS_WARN("unsupported image component number: %i", sensor->image().numComponents());
+      RCLCPP_WARN(node_->get_logger(),"unsupported image component number: %i", sensor->image().numComponents());
     }
     vision.is_bigendian = 0;
     vision.step = sensor->image().width() * sensor->image().numComponents();
     vision.data.resize(vision.step * vision.height);
     std::memcpy(&(vision.data[0]), &(sensor->image().pixels()[0]), vision.step * vision.height);
-    publisher.publish(vision);
+    // TODO
+    sensor_msgs::msg::CameraInfo camera_info;
+    publisher->publish(vision,camera_info);
 }
 
 
-void BodyROS2Item::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateRangeVisionSensor(RangeCamera* sensor, rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher)
 {
     if(!sensor->on()){
         return;
     }
-    sensor_msgs::PointCloud2 range;
-    range.header.stamp.fromSec(io->currentTime());
+    sensor_msgs::msg::PointCloud2 range;
+    range.header.stamp = getStampMsgFromSec(io->currentTime());
     range.header.frame_id = sensor->name();
     range.width = sensor->resolutionX();
     range.height = sensor->resolutionY();
@@ -394,7 +402,7 @@ void BodyROS2Item::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& 
         range.fields[3].name = "rgb";
         range.fields[3].offset = 12;
         range.fields[3].count = 1;
-        range.fields[3].datatype = sensor_msgs::PointField::FLOAT32;
+        range.fields[3].datatype = sensor_msgs::msg::PointField::FLOAT32;
         /*
           range.fields[3].name = "r";
           range.fields[3].offset = 12;
@@ -416,15 +424,15 @@ void BodyROS2Item::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& 
     }
     range.fields[0].name = "x";
     range.fields[0].offset = 0;
-    range.fields[0].datatype = sensor_msgs::PointField::FLOAT32;
+    range.fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
     range.fields[0].count = 4;
     range.fields[1].name = "y";
     range.fields[1].offset = 4;
-    range.fields[1].datatype = sensor_msgs::PointField::FLOAT32;
+    range.fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
     range.fields[1].count = 4;
     range.fields[2].name = "z";
     range.fields[2].offset = 8;
-    range.fields[2].datatype = sensor_msgs::PointField::FLOAT32;
+    range.fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
     range.fields[2].count = 4;
     const std::vector<Vector3f>& points = sensor->constPoints();
     const unsigned char* pixels = sensor->constImage().pixels();
@@ -445,17 +453,17 @@ void BodyROS2Item::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& 
         }
         dst += range.point_step;
     }
-    publisher.publish(range);
+    publisher->publish(range);
 }
 
 
-void BodyROS2Item::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::updateRangeSensor(RangeSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher)
 {
     if(!sensor->on()){
         return;
     }
-    sensor_msgs::LaserScan range;
-    range.header.stamp.fromSec(io->currentTime());
+    sensor_msgs::msg::LaserScan range;
+    range.header.stamp = getStampMsgFromSec(io->currentTime());
     range.header.frame_id = sensor->name();
     range.range_max = sensor->maxDistance();
     range.range_min = sensor->minDistance();
@@ -475,18 +483,18 @@ void BodyROS2Item::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publis
         range.ranges[j] = sensor->rangeData()[j];
         //range.intensities[j] = -900000;
     }
-    publisher.publish(range);
+    publisher->publish(range);
 }
 
 
-void BodyROS2Item::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
+void BodyROS2Item::update3DRangeSensor(RangeSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr publisher)
 {
     if(!sensor->on()){
         return;
     }
-    sensor_msgs::PointCloud range;
+    sensor_msgs::msg::PointCloud range;
     // Header Info
-    range.header.stamp.fromSec(io->currentTime());
+    range.header.stamp = getStampMsgFromSec(io->currentTime());
     range.header.frame_id = sensor->name();
 
     // Calculate Point Cloud data
@@ -504,7 +512,7 @@ void BodyROS2Item::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publ
             const double distance = sensor->rangeData()[srctop + yaw];
             if(distance <= sensor->maxDistance()){
                 double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
-                geometry_msgs::Point32 point;
+                geometry_msgs::msg::Point32 point;
                 point.x = distance *  cosPitchAngle * sin(-yawAngle);
                 point.y = distance * sin(pitchAngle);
                 point.z = -distance * cosPitchAngle * cos(-yawAngle);
@@ -513,7 +521,7 @@ void BodyROS2Item::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publ
         }
     }
 
-    publisher.publish(range);
+    publisher->publish(range);
 }
 
 
@@ -529,44 +537,44 @@ void BodyROS2Item::output()
 }
 
 
-void BodyROS2Item::stop_publish()
-{
-    size_t i;
+//void BodyROS2Item::stop_publish()
+//{
+//    size_t i;
+//
+//    for (i = 0; i < force_sensor_publishers_.size(); i++) {
+//        force_sensor_publishers_[i].shutdown();
+//    }
+//
+//    for (i = 0; i < rate_gyro_sensor_publishers_.size(); i++) {
+//        rate_gyro_sensor_publishers_[i].shutdown();
+//    }
+//
+//    for (i = 0; i < accel_sensor_publishers_.size(); i++) {
+//        accel_sensor_publishers_[i].shutdown();
+//    }
+//
+//    for (i = 0; i < vision_sensor_publishers_.size(); i++) {
+//        vision_sensor_publishers_[i].shutdown();
+//    }
+//
+//    for (i = 0; i < range_vision_sensor_publishers_.size(); i++) {
+//        range_vision_sensor_publishers_[i].shutdown();
+//    }
+//
+//    for (i = 0; i < range_sensor_publishers_.size(); i++) {
+//        range_sensor_publishers_[i].shutdown();
+//    }
+//
+//    for (i = 0; i < range_sensor_pc_publishers_.size(); i++) {
+//        range_sensor_pc_publishers_[i].shutdown();
+//    }
+//
+//    return;
+//}
 
-    for (i = 0; i < force_sensor_publishers_.size(); i++) {
-        force_sensor_publishers_[i].shutdown();
-    }
 
-    for (i = 0; i < rate_gyro_sensor_publishers_.size(); i++) {
-        rate_gyro_sensor_publishers_[i].shutdown();
-    }
-
-    for (i = 0; i < accel_sensor_publishers_.size(); i++) {
-        accel_sensor_publishers_[i].shutdown();
-    }
-
-    for (i = 0; i < vision_sensor_publishers_.size(); i++) {
-        vision_sensor_publishers_[i].shutdown();
-    }
-
-    for (i = 0; i < range_vision_sensor_publishers_.size(); i++) {
-        range_vision_sensor_publishers_[i].shutdown();
-    }
-
-    for (i = 0; i < range_sensor_publishers_.size(); i++) {
-        range_sensor_publishers_[i].shutdown();
-    }
-
-    for (i = 0; i < range_sensor_pc_publishers_.size(); i++) {
-        range_sensor_pc_publishers_[i].shutdown();
-    }
-  
-    return;
-}
-
-
-bool BodyROS2Item::switchDevice(std_srvs::SetBoolRequest& request,
-                               std_srvs::SetBoolResponse& response,
+bool BodyROS2Item::switchDevice(std_srvs::srv::SetBool::Request& request,
+                               std_srvs::srv::SetBool::Response& response,
                                Device* sensor)
 {
     sensor->on(request.data);
@@ -577,13 +585,19 @@ bool BodyROS2Item::switchDevice(std_srvs::SetBoolRequest& request,
 
 void BodyROS2Item::stop()
 {
-    if (ros::ok()) {
-        stop_publish();
+    if (rclcpp::ok()) {
 
-        if (rosnode_) {
-            rosnode_->shutdown();
+        if (node_) {
+            rclcpp::shutdown();
         }
     }
 
     return;
+}
+
+builtin_interfaces::msg::Time BodyROS2Item::getStampMsgFromSec(double sec) {
+  builtin_interfaces::msg::Time msg;
+  msg.sec = int(sec);
+  msg.nanosec = (sec - int(sec))*1000000000;
+  return msg;
 }

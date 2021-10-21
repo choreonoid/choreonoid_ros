@@ -262,7 +262,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
             const ros::Publisher publisher = rosNode->advertise<
-                sensor_msgs::PointCloud>(name + "/point_cloud", 1);
+                sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
             sensor->sigStateChanged().connect([this, sensor, publisher]() {
                 update3DRangeSensor(sensor, publisher);
             });
@@ -506,7 +506,7 @@ void BodyROSItem::update3DRangeSensor
     if(!sensor->on()){
         return;
     }
-    sensor_msgs::PointCloud range;
+    sensor_msgs::PointCloud2 range;
     // Header Info
     range.header.stamp.fromSec(io->currentTime());
     range.header.frame_id = sensor->name();
@@ -516,22 +516,45 @@ void BodyROSItem::update3DRangeSensor
     const double pitchStep = sensor->pitchStep();
     const int numYawSamples = sensor->numYawSamples();
     const double yawStep = sensor->yawStep();
-        
-    for(int pitch=0; pitch < numPitchSamples; ++pitch){
-        const double pitchAngle = pitch * pitchStep - sensor->pitchRange() / 2.0;
+
+    range.height = numPitchSamples;
+    range.width = numYawSamples;
+    range.point_step = 12;
+    range.row_step = range.width * range.point_step;
+    range.fields.resize(3);
+    range.fields[0].name = "x";
+    range.fields[0].offset = 0;
+    range.fields[0].datatype = sensor_msgs::PointField::FLOAT32;
+    range.fields[0].count = 4;
+    range.fields[1].name = "y";
+    range.fields[1].offset = 4;
+    range.fields[1].datatype = sensor_msgs::PointField::FLOAT32;
+    range.fields[1].count = 4;
+    range.fields[2].name = "z";
+    range.fields[2].offset = 8;
+    range.fields[2].datatype = sensor_msgs::PointField::FLOAT32;
+    range.fields[2].count = 4;
+
+    range.data.resize(numPitchSamples * numYawSamples * range.point_step);
+    unsigned char* dst = (unsigned char*)&(range.data[0]);
+
+    for (int pitchIndex = 0; pitchIndex < numPitchSamples; ++pitchIndex) {
+        const double pitchAngle =
+            pitchIndex * pitchStep - sensor->pitchRange() / 2.0;
         const double cosPitchAngle = cos(pitchAngle);
-        const int srctop = pitch * numYawSamples;
-            
-        for(int yaw=0; yaw < numYawSamples; ++yaw){
-            const double distance = sensor->rangeData()[srctop + yaw];
-            if(distance <= sensor->maxDistance()){
-                double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
-                geometry_msgs::Point32 point;
-                point.x = distance *  cosPitchAngle * sin(-yawAngle);
-                point.y = distance * sin(pitchAngle);
-                point.z = -distance * cosPitchAngle * cos(-yawAngle);
-                range.points.push_back(point);
-            }
+        const double sinPitchAngle = sin(pitchAngle);
+        const int srctop = pitchIndex * numYawSamples;
+
+        for (int yawIndex = 0; yawIndex < numYawSamples; ++yawIndex) {
+            const double distance = sensor->rangeData()[srctop + yawIndex];
+            const double yawAngle = yawIndex * yawStep - sensor->yawRange() / 2.0;
+            const float x = distance *  cosPitchAngle * sin(-yawAngle);
+            const float y = distance * sinPitchAngle;
+            const float z = -distance * cosPitchAngle * cos(-yawAngle);
+            std::memcpy(&dst[0], &x, 4);
+            std::memcpy(&dst[4], &y, 4);
+            std::memcpy(&dst[8], &z, 4);
+            dst += range.point_step;
         }
     }
 

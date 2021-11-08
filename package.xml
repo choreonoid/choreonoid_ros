@@ -6,15 +6,27 @@
   <maintainer email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</maintainer>
   <license>MIT</license>
   <author email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</author>
+  <author email="groadpg@gmail.com">Ryodo Tanaka</author>
   <url type="website">http://choreonoid.org</url>
   <url type="repository">https://github.com/choreonoid/choreonoid_ros_samples.git</url>
+
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>angles</depend>
   <depend>choreonoid</depend>
-  <depend>roscpp</depend>
+  <depend>control_toolbox</depend>
+  <depend>controller_manager</depend>
+  <depend>hardware_interface</depend>
+  <depend>image_transport</depend>
+  <depend>joint_limits_interface</depend>
+  <depend>pluginlib</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>image_transport</depend>
+  <depend>roscpp</depend>
+  <depend>transmission_interface</depend>
+  <depend>urdf</depend>
+
   <export>
     <build_type>cmake</build_type>
+    <choreonoid_ros plugin="${prefix}/plugins.xml" />
   </export>
 </package>

@@ -112,13 +112,20 @@ private:
     std::vector<ros::ServiceServer> range_sensor_switch_servers_;
     std::vector<ros::ServiceServer> range_sensor_pc_switch_servers_;
 
-    void updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher);
-    void updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher);
-    void updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher);
-    void updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher);
-    void updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher);
-    void updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher);
-    void update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher);
+    void updateForceSensor(const ForceSensorPtr& sensor,
+                           const ros::Publisher& publisher);
+    void updateRateGyroSensor(const RateGyroSensorPtr& sensor,
+                              const ros::Publisher& publisher);
+    void updateAccelSensor(const AccelerationSensorPtr& sensor,
+                           const ros::Publisher& publisher);
+    void updateVisionSensor(const CameraPtr& sensor,
+                            const image_transport::Publisher& publisher);
+    void updateRangeVisionSensor(const RangeCameraPtr& sensor,
+                                 const ros::Publisher& publisher);
+    void updateRangeSensor(const RangeSensorPtr& sensor,
+                           const ros::Publisher& publisher);
+    void update3DRangeSensor(const RangeSensorPtr& sensor,
+                             const ros::Publisher& publisher);
 
     bool switchDevice(std_srvs::SetBoolRequest &request,
                       std_srvs::SetBoolResponse &response,

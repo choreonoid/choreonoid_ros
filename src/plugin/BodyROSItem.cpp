@@ -157,9 +157,9 @@ void BodyROSItem::createSensors(BodyPtr body)
         std::replace(name.begin(), name.end(), '-', '_');
         const ros::Publisher publisher
             = rosnode_->advertise<geometry_msgs::WrenchStamped>(name, 1);
-        sensor->sigStateChanged().connect(
-            boost::bind(&BodyROSItem::updateForceSensor,
-                        this, sensor, publisher));
+        sensor->sigStateChanged().connect([this, sensor, publisher]() {
+            updateForceSensor(sensor, publisher);
+        });
         force_sensor_publishers_.push_back(publisher);
         boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
             = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
@@ -176,9 +176,9 @@ void BodyROSItem::createSensors(BodyPtr body)
         std::replace(name.begin(), name.end(), '-', '_');
         const ros::Publisher publisher
             = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
-        sensor->sigStateChanged().connect(
-            boost::bind(&BodyROSItem::updateRateGyroSensor,
-                        this, sensor, publisher));
+        sensor->sigStateChanged().connect([this, sensor, publisher]() {
+            updateRateGyroSensor(sensor, publisher);
+        });
         rate_gyro_sensor_publishers_.push_back(publisher);
         boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
             = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
@@ -195,9 +195,9 @@ void BodyROSItem::createSensors(BodyPtr body)
         std::replace(name.begin(), name.end(), '-', '_');
         const ros::Publisher publisher
             = rosnode_->advertise<sensor_msgs::Imu>(name, 1);
-        sensor->sigStateChanged().connect(
-            boost::bind(&BodyROSItem::updateAccelSensor,
-                        this, sensor, publisher));
+        sensor->sigStateChanged().connect([this, sensor, publisher]() {
+            updateAccelSensor(sensor, publisher);
+        });
         accel_sensor_publishers_.push_back(publisher);
         boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
             = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
@@ -215,9 +215,9 @@ void BodyROSItem::createSensors(BodyPtr body)
         std::replace(name.begin(), name.end(), '-', '_');
         const image_transport::Publisher publisher
             = it.advertise(name + "/image_raw", 1);
-        sensor->sigStateChanged().connect(
-            boost::bind(&BodyROSItem::updateVisionSensor,
-                        this, sensor, publisher));
+        sensor->sigStateChanged().connect([this, sensor, publisher]() {
+            updateVisionSensor(sensor, publisher);
+        });
         vision_sensor_publishers_.push_back(publisher);
         boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
             = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
@@ -235,9 +235,9 @@ void BodyROSItem::createSensors(BodyPtr body)
         std::replace(name.begin(), name.end(), '-', '_');
         const ros::Publisher publisher = rosnode_->advertise<
             sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
-        sensor->sigStateChanged().connect(
-            boost::bind(&BodyROSItem::updateRangeVisionSensor,
-                        this, sensor, publisher));
+        sensor->sigStateChanged().connect([this, sensor, publisher]() {
+            updateRangeVisionSensor(sensor, publisher);
+        });
         range_vision_sensor_publishers_.push_back(publisher);
         // adds a server only for the camera whose type is COLOR_DEPTH or POINT_CLOUD.
         // Without this exception, a new service server may be a duplicate
@@ -266,9 +266,9 @@ void BodyROSItem::createSensors(BodyPtr body)
             std::replace(name.begin(), name.end(), '-', '_');
             const ros::Publisher publisher = rosnode_->advertise<
                 sensor_msgs::PointCloud>(name + "/point_cloud", 1);
-            sensor->sigStateChanged().connect(
-                boost::bind(&BodyROSItem::update3DRangeSensor,
-                            this, sensor, publisher));
+            sensor->sigStateChanged().connect([this, sensor, publisher]() {
+                update3DRangeSensor(sensor, publisher);
+            });
             range_sensor_pc_publishers_.push_back(publisher);
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                 = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
@@ -281,9 +281,9 @@ void BodyROSItem::createSensors(BodyPtr body)
             std::replace(name.begin(), name.end(), '-', '_');
             const ros::Publisher publisher
                 = rosnode_->advertise<sensor_msgs::LaserScan>(name + "/scan", 1);
-            sensor->sigStateChanged().connect(
-                boost::bind(&BodyROSItem::updateRangeSensor,
-                            this, sensor, publisher));
+            sensor->sigStateChanged().connect([this, sensor, publisher]() {
+                updateRangeSensor(sensor, publisher);
+            });
             range_sensor_publishers_.push_back(publisher);
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                 = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
@@ -321,7 +321,8 @@ bool BodyROSItem::control()
 }
 
 
-void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher)
+void BodyROSItem::updateForceSensor(const ForceSensorPtr& sensor,
+                                    const ros::Publisher& publisher)
 {
     geometry_msgs::WrenchStamped force;
     force.header.stamp.fromSec(io->currentTime());
@@ -336,7 +337,8 @@ void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publish
 }
 
 
-void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher)
+void BodyROSItem::updateRateGyroSensor(const RateGyroSensorPtr& sensor,
+                                       const ros::Publisher& publisher)
 {
     sensor_msgs::Imu gyro;
     gyro.header.stamp.fromSec(io->currentTime());
@@ -348,7 +350,8 @@ void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& p
 }
 
 
-void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher)
+void BodyROSItem::updateAccelSensor(const AccelerationSensorPtr& sensor,
+                                    const ros::Publisher& publisher)
 {
     sensor_msgs::Imu accel;
     accel.header.stamp.fromSec(io->currentTime());
@@ -360,7 +363,8 @@ void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& 
 }
 
 
-void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher)
+void BodyROSItem::updateVisionSensor(const CameraPtr& sensor,
+                                     const image_transport::Publisher& publisher)
 {
     sensor_msgs::Image vision;
     vision.header.stamp.fromSec(io->currentTime());
@@ -382,7 +386,8 @@ void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher&
 }
 
 
-void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher)
+void BodyROSItem::updateRangeVisionSensor(const RangeCameraPtr& sensor,
+                                          const ros::Publisher& publisher)
 {
     sensor_msgs::PointCloud2 range;
     range.header.stamp.fromSec(io->currentTime());
@@ -452,7 +457,8 @@ void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& p
 }
 
 
-void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
+void BodyROSItem::updateRangeSensor(const RangeSensorPtr& sensor,
+                                    const ros::Publisher& publisher)
 {
     sensor_msgs::LaserScan range;
     range.header.stamp.fromSec(io->currentTime());
@@ -479,7 +485,8 @@ void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publish
 }
 
 
-void BodyROSItem::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
+void BodyROSItem::update3DRangeSensor(const RangeSensorPtr& sensor,
+                                      const ros::Publisher& publisher)
 {
     sensor_msgs::PointCloud range;
     // Header Info

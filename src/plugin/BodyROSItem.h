@@ -83,10 +83,10 @@ private:
 
     /* joint states */
     sensor_msgs::JointState joint_state_;
-    ros::Publisher joint_state_publisher_;
-    double joint_state_update_rate_;
-    double joint_state_update_period_;
-    double joint_state_last_update_;
+    ros::Publisher jointStatePublisher;
+    double jointStateUpdateRate;
+    double jointStateUpdatePeriod;
+    double jointStateLastUpdate;
 
     ControllerIO* io;
     double controlTime_;
@@ -94,48 +94,47 @@ private:
 
     std::string bodyName;
 
-    std::unique_ptr<ros::NodeHandle> rosnode_;
+    std::unique_ptr<ros::NodeHandle> rosNode;
  
-    std::vector<ros::Publisher> force_sensor_publishers_;
-    std::vector<ros::Publisher> rate_gyro_sensor_publishers_;
-    std::vector<ros::Publisher> accel_sensor_publishers_;
-    std::vector<image_transport::Publisher> vision_sensor_publishers_;
-    std::vector<ros::Publisher> range_vision_sensor_publishers_;
-    std::vector<ros::Publisher> range_sensor_publishers_;
-    std::vector<ros::Publisher> range_sensor_pc_publishers_;
+    std::vector<ros::Publisher> forceSensorPublishers;
+    std::vector<ros::Publisher> rateGyroSensorPublishers;
+    std::vector<ros::Publisher> accelSensorPublishers;
+    std::vector<image_transport::Publisher> visionSensorPublishers;
+    std::vector<ros::Publisher> rangeVisionSensorPublishers;
+    std::vector<ros::Publisher> rangeSensorPublishers;
+    std::vector<ros::Publisher> rangeSensorPcPublishers;
 
-    std::vector<ros::ServiceServer> force_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> rate_gyro_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> accel_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> vision_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> range_vision_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> range_sensor_switch_servers_;
-    std::vector<ros::ServiceServer> range_sensor_pc_switch_servers_;
+    std::vector<ros::ServiceServer> forceSensorSwitchServers;
+    std::vector<ros::ServiceServer> rateGyroSensorSwitchServers;
+    std::vector<ros::ServiceServer> accelSensorSwitchServers;
+    std::vector<ros::ServiceServer> visionSensorSwitchServers;
+    std::vector<ros::ServiceServer> rangeVisionSensorSwitchServers;
+    std::vector<ros::ServiceServer> rangeSensorSwitchServers;
+    std::vector<ros::ServiceServer> rangeSensorPcSwitchServers;
 
-    void updateForceSensor(const ForceSensorPtr& sensor,
-                           const ros::Publisher& publisher);
-    void updateRateGyroSensor(const RateGyroSensorPtr& sensor,
-                              const ros::Publisher& publisher);
-    void updateAccelSensor(const AccelerationSensorPtr& sensor,
-                           const ros::Publisher& publisher);
-    void updateVisionSensor(const CameraPtr& sensor,
-                            const image_transport::Publisher& publisher);
-    void updateRangeVisionSensor(const RangeCameraPtr& sensor,
-                                 const ros::Publisher& publisher);
-    void updateRangeSensor(const RangeSensorPtr& sensor,
-                           const ros::Publisher& publisher);
-    void update3DRangeSensor(const RangeSensorPtr& sensor,
-                             const ros::Publisher& publisher);
+    void updateForceSensor(
+        const ForceSensorPtr& sensor, const ros::Publisher& publisher);
+    void updateRateGyroSensor(
+        const RateGyroSensorPtr& sensor, const ros::Publisher& publisher);
+    void updateAccelSensor(
+        const AccelerationSensorPtr& sensor, const ros::Publisher& publisher);
+    void updateVisionSensor(
+        const CameraPtr& sensor, const image_transport::Publisher& publisher);
+    void updateRangeVisionSensor(
+        const RangeCameraPtr& sensor, const ros::Publisher& publisher);
+    void updateRangeSensor(
+        const RangeSensorPtr& sensor, const ros::Publisher& publisher);
+    void update3DRangeSensor(
+        const RangeSensorPtr& sensor, const ros::Publisher& publisher);
 
-    bool switchDevice(std_srvs::SetBoolRequest &request,
-                      std_srvs::SetBoolResponse &response,
-                      Device* sensor);
+    bool switchDevice(
+        std_srvs::SetBoolRequest &request, std_srvs::SetBoolResponse &response, Device* sensor);
 
     /**
-      @brief Stop publish.
+      @brief Stop publishing.
       This method call from BodyROSItem::stop.
      */
-    void stop_publish();
+    void stopPublishing();
 };
 
 typedef ref_ptr<BodyROSItem> BodyROSItemPtr;

@@ -11,17 +11,16 @@
   <url type="repository">https://github.com/choreonoid/choreonoid_ros_samples.git</url>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>angles</depend>
   <depend>choreonoid</depend>
-  <depend>control_toolbox</depend>
-  <depend>controller_manager</depend>
-  <depend>hardware_interface</depend>
-  <depend>image_transport</depend>
-  <depend>joint_limits_interface</depend>
-  <depend>pluginlib</depend>
+  <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>roscpp</depend>
+  <depend>image_transport</depend>
+  <depend>pluginlib</depend>
+  <depend>angles</depend>
+  <depend>controller_manager</depend>
+  <depend>hardware_interface</depend>
+  <depend>joint_limits_interface</depend>
   <depend>transmission_interface</depend>
   <depend>urdf</depend>
 

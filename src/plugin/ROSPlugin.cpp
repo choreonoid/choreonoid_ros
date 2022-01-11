@@ -4,7 +4,7 @@
 #include "deprecated/BodyPublisherItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/AppCustomizationUtil>
-#include <cnoid/MessageManager>
+#include <cnoid/MessageOut>
 #include <ros/init.h>
 #include <ros/master.h>
 #include <ros/spinner.h>
@@ -48,7 +48,7 @@ public:
     virtual bool initialize() override
     {
         if(!ros::isInitialized()){
-            MessageManager::master()->putError(
+            MessageOut::master()->putError(
                 "The ROS plugin cannot be used because ROS is not initialized. \n"
                 "Choreonoid must be invoked as a ROS node to make the ROS plugin available.\n");
             return false;

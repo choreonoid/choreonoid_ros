@@ -89,7 +89,7 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
         jointNames[i] = transmission[i].joints_[0].name_;
 
         // Get cnoid::Link //
-        Link* link = io->body()->link(jointNames[i].c_str());
+        Link* link = io->body()->joint(jointNames[i].c_str());
         if(!link){
             mv->putln(
                 format(_("This robot has a joint named \"{0}\" which is not in the choreonoid model."),

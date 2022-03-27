@@ -21,6 +21,13 @@ target_link_libraries(${target}
   Choreonoid::CnoidBodyPlugin
   )
 
+option(USE_POINTCLOUD1_IN_BODY_ROS_ITEM "Use the PointCloud type instead of PointCoud2 for publishing range sensor data" OFF)
+mark_as_advanced(USE_POINTCLOUD1_IN_BODY_ROS_ITEM)
+
+if(USE_POINTCLOUD1_IN_BODY_ROS_ITEM)
+  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS CNOID_ROS_PLUGIN_USE_POINTCLOUD1)
+endif()
+
 # RobotHW inherited ros_control Choreonoid interface class
 add_library(RobotHWCnoid RobotHWSim.h RobotHWCnoid.cpp)
 target_link_libraries(RobotHWCnoid ${catkin_LIBRARIES} Choreonoid::CnoidBody Choreonoid::CnoidBase)

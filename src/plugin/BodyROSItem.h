@@ -2,10 +2,12 @@
 #define CNOID_ROS_PLUGIN_BODY_ROS_ITEM_H
 
 #include <cnoid/ControllerItem>
-#include <cnoid/BasicSensorSimulationHelper>
 #include <cnoid/Body>
 #include <cnoid/Device>
 #include <cnoid/DeviceList>
+#include <cnoid/ForceSensor>
+#include <cnoid/RateGyroSensor>
+#include <cnoid/AccelerationSensor>
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
@@ -13,17 +15,10 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/LaserScan.h>
-#include <geometry_msgs/WrenchStamped.h>
 #include <std_srvs/SetBool.h>
-
 #include <image_transport/image_transport.h>
 
-#include <fstream>
+#include <ostream>
 #include <memory>
 #include <string>
 #include <vector>

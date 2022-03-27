@@ -1,12 +1,25 @@
 #include "BodyROSItem.h"
-#include <cnoid/PutPropertyFunction>
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
-#include <cnoid/Sensor>
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
+#include <cnoid/PutPropertyFunction>
 #include <ros/console.h>
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/LaserScan.h>
+#include <geometry_msgs/WrenchStamped.h>
 #include <geometry_msgs/Point32.h>
+
+#include <sensor_msgs/PointCloud2.h>
+#ifdef CNOID_ROS_PLUGIN_USE_POINTCLOUD1
+#include <sensor_msgs/PointCloud.h>
+typedef sensor_msgs::PointCloud PointCloudTypeForRangeSensor;
+#else
+typedef sensor_msgs::PointCloud2 PointCloudTypeForRangeSensor;
+#endif
+
 #include <fmt/format.h>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -164,6 +177,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             rosNode->advertiseService(name + "/set_enabled", requestCallback));
         ROS_INFO("Create force sensor %s", sensor->name().c_str());
     }
+    
     rateGyroSensorPublishers.clear();
     rateGyroSensorPublishers.reserve(gyroSensors_.size());
     rateGyroSensorSwitchServers.clear();
@@ -183,6 +197,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             rosNode->advertiseService(name + "/set_enabled", requestCallback));
         ROS_INFO("Create gyro sensor %s", sensor->name().c_str());
     }
+    
     accelSensorPublishers.clear();
     accelSensorPublishers.reserve(accelSensors_.size());
     accelSensorSwitchServers.clear();
@@ -202,6 +217,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             rosNode->advertiseService(name + "/set_enabled", requestCallback));
         ROS_INFO("Create accel sensor %s", sensor->name().c_str());
     }
+    
     image_transport::ImageTransport it(*rosNode);
     visionSensorPublishers.clear();
     visionSensorPublishers.reserve(visionSensors_.size());
@@ -223,6 +239,7 @@ void BodyROSItem::createSensors(BodyPtr body)
         ROS_INFO("Create RGB camera %s (%f Hz)",
                  sensor->name().c_str(), sensor->frameRate());
     }
+    
     rangeVisionSensorPublishers.clear();
     rangeVisionSensorPublishers.reserve(rangeVisionSensors_.size());
     rangeVisionSensorSwitchServers.clear();
@@ -230,8 +247,8 @@ void BodyROSItem::createSensors(BodyPtr body)
     for (RangeCameraPtr sensor : rangeVisionSensors_) {
         std::string name = sensor->name();
         std::replace(name.begin(), name.end(), '-', '_');
-        const ros::Publisher publisher = rosNode->advertise<
-            sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
+        const ros::Publisher publisher =
+            rosNode->advertise<sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateRangeVisionSensor(sensor, publisher);
         });
@@ -249,6 +266,13 @@ void BodyROSItem::createSensors(BodyPtr body)
             ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
         }
     }
+
+#ifdef CNOID_ROS_PLUGIN_USE_POINTCLOUD1
+    typedef sensor_msgs::PointCloud PointCloudTypeForRangeSensor;
+#else
+    typedef sensor_msgs::PointCloud2 PointCloudTypeForRangeSensor;
+#endif
+    
     rangeSensorPublishers.clear();
     rangeSensorPublishers.reserve(rangeSensors_.size());
     rangeSensorSwitchServers.clear();
@@ -261,8 +285,8 @@ void BodyROSItem::createSensors(BodyPtr body)
         if (sensor->numPitchSamples() > 1) {
             std::string name = sensor->name();
             std::replace(name.begin(), name.end(), '-', '_');
-            const ros::Publisher publisher = rosNode->advertise<
-                sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
+            const ros::Publisher publisher =
+                rosNode->advertise<PointCloudTypeForRangeSensor>(name + "/point_cloud", 1);
             sensor->sigStateChanged().connect([this, sensor, publisher]() {
                 update3DRangeSensor(sensor, publisher);
             });
@@ -500,6 +524,7 @@ void BodyROSItem::updateRangeSensor
 }
 
 
+#ifndef CNOID_ROS_PLUGIN_USE_POINTCLOUD1
 void BodyROSItem::update3DRangeSensor
 (const RangeSensorPtr& sensor, const ros::Publisher& publisher)
 {
@@ -560,6 +585,48 @@ void BodyROSItem::update3DRangeSensor
 
     publisher.publish(range);
 }
+#endif
+
+
+#ifdef CNOID_ROS_PLUGIN_USE_POINTCLOUD1
+void BodyROSItem::update3DRangeSensor
+(const RangeSensorPtr& sensor, const ros::Publisher& publisher)
+{
+    if(!sensor->on()){
+        return;
+    }
+    sensor_msgs::PointCloud range;
+    // Header Info
+    range.header.stamp.fromSec(io->currentTime());
+    range.header.frame_id = sensor->name();
+
+    // Calculate Point Cloud data
+    const int numPitchSamples = sensor->numPitchSamples();
+    const double pitchStep = sensor->pitchStep();
+    const int numYawSamples = sensor->numYawSamples();
+    const double yawStep = sensor->yawStep();
+        
+    for(int pitch=0; pitch < numPitchSamples; ++pitch){
+        const double pitchAngle = pitch * pitchStep - sensor->pitchRange() / 2.0;
+        const double cosPitchAngle = cos(pitchAngle);
+        const int srctop = pitch * numYawSamples;
+            
+        for(int yaw=0; yaw < numYawSamples; ++yaw){
+            const double distance = sensor->rangeData()[srctop + yaw];
+            if(distance <= sensor->maxDistance()){
+                double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
+                geometry_msgs::Point32 point;
+                point.x = distance *  cosPitchAngle * sin(-yawAngle);
+                point.y = distance * sin(pitchAngle);
+                point.z = -distance * cosPitchAngle * cos(-yawAngle);
+                range.points.push_back(point);
+            }
+        }
+    }
+
+    publisher.publish(range);
+}
+#endif
 
 
 void BodyROSItem::input()

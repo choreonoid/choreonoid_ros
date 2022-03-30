@@ -476,8 +476,8 @@ void BodyROSItem::updateRangeVisionSensor
     unsigned char* dst = (unsigned char*)&(range.data[0]);
     for (size_t j = 0; j < points.size(); ++j) {
         float x = points[j].x();
-        float y = - points[j].y();
-        float z = - points[j].z();
+        float y = points[j].y();
+        float z = points[j].z();
         std::memcpy(&dst[0], &x, 4);
         std::memcpy(&dst[4], &y, 4);
         std::memcpy(&dst[8], &z, 4);
@@ -563,7 +563,13 @@ void BodyROSItem::update3DRangeSensor
     range.data.resize(numPitchSamples * numYawSamples * range.point_step);
     unsigned char* dst = (unsigned char*)&(range.data[0]);
 
-    for (int pitchIndex = 0; pitchIndex < numPitchSamples; ++pitchIndex) {
+    Matrix3f Ro;
+    bool hasRo = !sensor->opticalFrameRotation().isIdentity();
+    if(hasRo){
+        Ro = sensor->opticalFrameRotation().cast<float>();
+    }
+    
+    for(int pitchIndex = 0; pitchIndex < numPitchSamples; ++pitchIndex){
         const double pitchAngle =
             pitchIndex * pitchStep - sensor->pitchRange() / 2.0;
         const double cosPitchAngle = cos(pitchAngle);
@@ -573,12 +579,16 @@ void BodyROSItem::update3DRangeSensor
         for (int yawIndex = 0; yawIndex < numYawSamples; ++yawIndex) {
             const double distance = sensor->rangeData()[srctop + yawIndex];
             const double yawAngle = yawIndex * yawStep - sensor->yawRange() / 2.0;
-            const float x = distance *  cosPitchAngle * sin(-yawAngle);
-            const float y = distance * sinPitchAngle;
-            const float z = -distance * cosPitchAngle * cos(-yawAngle);
-            std::memcpy(&dst[0], &x, 4);
-            std::memcpy(&dst[4], &y, 4);
-            std::memcpy(&dst[8], &z, 4);
+            Vector3f p;
+            p.x() = distance *  cosPitchAngle * sin(-yawAngle);
+            p.y() = distance * sinPitchAngle;
+            p.z() = -distance * cosPitchAngle * cos(-yawAngle);
+            if(hasRo){
+                p = Ro * p;
+            }
+            std::memcpy(&dst[0], &p.x(), 4);
+            std::memcpy(&dst[4], &p.y(), 4);
+            std::memcpy(&dst[8], &p.z(), 4);
             dst += range.point_step;
         }
     }

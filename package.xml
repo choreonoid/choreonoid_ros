@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>choreonoid_ros2</name>
+  <name>choreonoid_ros</name>
   <version>1.7.0</version>
   <description>The package for using Choreonoid as a ROS node</description>
   <maintainer email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</maintainer>
@@ -12,6 +12,7 @@
   <depend>choreonoid</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>sensor_msgs</depend>
   <depend>image_transport</depend>
   <export>

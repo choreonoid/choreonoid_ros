@@ -6,10 +6,10 @@
 #include <cnoid/Archive>
 #include <cnoid/ConnectionSet>
 #include <cnoid/PutPropertyFunction>
-#include <ros/node_handle.h>
-#include <sensor_msgs/JointState.h>
-#include <sensor_msgs/image_encodings.h>
-#include <image_transport/image_transport.h>
+//#include <ros/node_handle.h>
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <sensor_msgs/image_encodings.hpp>
+#include <image_transport/image_transport.hpp>
 #include <memory>
 #include "../gettext.h"
 
@@ -18,10 +18,10 @@ using namespace cnoid;
 
 namespace {
 
-class BodyNode
+class BodyNode : public rclcpp::Node
 {
 public:
-    unique_ptr<ros::NodeHandle> rosNode;
+//    unique_ptr<ros::NodeHandle> rosNode;
     BodyItem* bodyItem;
     ScopedConnectionSet connections;
     ScopedConnection connectionOfKinematicStateChange;
@@ -34,8 +34,8 @@ public:
     double minPublishCycle;
     double timeStep;
     
-    ros::Publisher jointStatePublisher;
-    sensor_msgs::JointState jointState;
+    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr jointStatePublisher;
+    sensor_msgs::msg::JointState jointState;
 
     DeviceList<Camera> cameras;
     vector<image_transport::Publisher> cameraImagePublishers;
@@ -229,22 +229,23 @@ bool BodyPublisherItem::restore(const Archive& archive)
 
 
 BodyNode::BodyNode(BodyItem* bodyItem)
-    : bodyItem(bodyItem),
+    : rclcpp::Node("body_ros", rclcpp::NodeOptions()), bodyItem(bodyItem),
       timeBar(TimeBar::instance())
 {
     string name = bodyItem->name();
     std::replace(name.begin(), name.end(), '-', '_');
 
-    rosNode.reset(new ros::NodeHandle(name));
+//    rosNode.reset(new ros::NodeHandle(name));
 
-    jointStatePublisher = rosNode->advertise<sensor_msgs::JointState>("joint_state", 1000);
+    jointStatePublisher = create_publisher<sensor_msgs::msg::JointState>("joint_state", 1000);
     startToPublishKinematicStateChangeOnGUI();
 
     auto body = bodyItem->body();
     DeviceList<> devices = body->devices();
 
     cameras.assign(devices.extract<Camera>());
-    image_transport::ImageTransport it(*rosNode);
+
+    image_transport::ImageTransport it(shared_from_this());
     cameraImagePublishers.resize(cameras.size());
     for(size_t i=0; i < cameras.size(); ++i){
         auto camera = cameras[i];
@@ -340,7 +341,9 @@ void BodyNode::initializeJointState(Body* body)
 
 void BodyNode::publishJointState(Body* body, double time)
 {
-    jointState.header.stamp.fromSec(time);
+    jointState.header.stamp.set__sec(static_cast<int32_t>(time));
+    int32_t nanosec = (time - static_cast<int32_t>(time)) * 10e9;
+    jointState.header.stamp.set__nanosec(nanosec);
 
     for(int i=0; i < body->numJoints(); ++i){
         Link* joint = body->joint(i);
@@ -349,15 +352,18 @@ void BodyNode::publishJointState(Body* body, double time)
         jointState.effort[i] = joint->u();
     }
 
-    jointStatePublisher.publish(jointState);
+    jointStatePublisher->publish(jointState);
 }
 
 
 void BodyNode::publishCameraImage(int index)
 {
     auto camera = cameras[index];
-    sensor_msgs::Image image;
-    image.header.stamp.fromSec(time);
+    sensor_msgs::msg::Image image;
+    image.header.stamp.set__sec(static_cast<int32_t>(time));
+    int nanosec = (time - static_cast<int32_t>(time)) * 10e9;
+    image.header.stamp.set__nanosec(nanosec);
+
     image.header.frame_id = camera->name();
     image.height = camera->image().height();
     image.width = camera->image().width();
@@ -366,7 +372,7 @@ void BodyNode::publishCameraImage(int index)
     } else if (camera->image().numComponents() == 1){
         image.encoding = sensor_msgs::image_encodings::MONO8;
     } else {
-        ROS_WARN("unsupported image component number: %i", camera->image().numComponents());
+        RCLCPP_WARN(get_logger(), "unsupported image component number: %i", camera->image().numComponents());
     }
     image.is_bigendian = 0;
     image.step = camera->image().width() * camera->image().numComponents();

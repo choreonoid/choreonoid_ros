@@ -6,18 +6,22 @@ choreonoid_add_plugin(${target}
         ROS2Plugin.cpp
         WorldROS2Item.cpp
         BodyROS2Item.cpp
-  deprecated/BodyPublisherItem.cpp
-  ${mofiles}
+        deprecated/BodyPublisherItem.cpp
+        ${mofiles}
   )
 
 target_link_libraries(${target}
   ${rclcpp_LIBRARIES}
   ${std_msgs_LIBRARIES}
+  ${std_srvs_LIBRARIES}
   ${sensor_msgs_LIBRARIES}
   ${image_transport_LIBRARIES}
   Choreonoid::CnoidBodyPlugin
   )
 
 if(CHOREONOID_ENABLE_PYTHON)
-  add_subdirectory(pybind11)
+#  add_subdirectory(pybind11)
 endif()
+
+install(TARGETS ${target}
+        RUNTIME DESTINATION lib/${PROJECT_NAME})

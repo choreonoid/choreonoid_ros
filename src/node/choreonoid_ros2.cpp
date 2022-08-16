@@ -9,6 +9,7 @@
 #include "../plugin/ROS2Plugin.hpp"
 #include <regex>
 #include <cstdlib>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 using namespace std;
 using namespace cnoid;
@@ -42,22 +43,22 @@ int main(int argc, char** argv)
 
     argc = args.size();
     argv = &args.front();
-    cnoid::App app(argc, argv);
-    app.initialize("Choreonoid-ROS2", "Choreonoid");
+    cnoid::App app(argc, argv,"Choreonoid-ROS2", "Choreonoid");
+    PluginManager::instance()->addPluginPath(ament_index_cpp::get_package_share_directory("choreonoid_ros")+"/../../lib");
+    app.initialize();
     ProjectManager::instance()->loadBuiltinProject(":/Base/project/layout.cnoid");
 
-    auto pm = PluginManager::instance();
-    auto ros2PluginRaw = pm->findPlugin("ROS2");
+    auto ros2PluginRaw = PluginManager::instance()->findPlugin("ROS2");
     ROS2Plugin *ros2Plugin = static_cast<ROS2Plugin*>(ros2PluginRaw);
 
     if(!ros2Plugin){
-        auto& errorMessage = pm->getErrorMessage("ROS2");
-        if(errorMessage.empty()){
-            cerr << "ROS2 plugin is not found." << endl;
-        } else {
-            cerr << "ROS2 plugin cannot be loaded.\n";
-            cerr << errorMessage << endl;
-        }
+//        auto& errorMessage = ProjectManager::instance()->getErrorMessage("ROS2");
+//        if(errorMessage.empty()){
+//            cerr << "ROS2 plugin is not found." << endl;
+//        } else {
+//            cerr << "ROS2 plugin cannot be loaded.\n";
+//            cerr << errorMessage << endl;
+//        }
         return 1;
     }
 

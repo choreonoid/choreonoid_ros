@@ -33,7 +33,7 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT BodyROS2Item : public ControllerItem
+class CNOID_EXPORT BodyROS2Item : public ControllerItem, rclcpp::Node
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -44,7 +44,6 @@ public:
     void createSensors(BodyPtr body);
     
     virtual bool initialize(ControllerIO* io) override;
-    void initilizeROS2(std::shared_ptr<rclcpp::Node> node);
     virtual bool start() override;
     virtual double timeStep() const override {
       return timeStep_;
@@ -95,8 +94,8 @@ private:
 
     std::string bodyName;
 
-    std::shared_ptr<rclcpp::Node> node_;
- 
+//    image_transport::ImageTransport image_transport_;
+
     std::vector<rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr> force_sensor_publishers_;
     std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> rate_gyro_sensor_publishers_;
     std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> accel_sensor_publishers_;

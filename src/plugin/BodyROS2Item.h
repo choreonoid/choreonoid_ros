@@ -33,7 +33,7 @@
 
 namespace cnoid {
 
-class CNOID_EXPORT BodyROS2Item : public ControllerItem, rclcpp::Node
+class CNOID_EXPORT BodyROS2Item : public ControllerItem
 {
 public:
     static void initializeClass(ExtensionManager* ext);
@@ -92,6 +92,10 @@ private:
     double controlTime_;
     std::ostream& os;
 
+    rclcpp::Node::SharedPtr node_;
+    std::shared_ptr<image_transport::ImageTransport> image_transport_;
+
+//    image_transport::ImageTransport image_transport_;
     std::string bodyName;
 
 //    image_transport::ImageTransport image_transport_;
@@ -102,7 +106,7 @@ private:
         rateGyroSensorPublishers;
     std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr>
         accelSensorPublishers;
-    std::vector<std::shared_ptr<image_transport::CameraPublisher>>
+    std::vector<std::shared_ptr<image_transport::Publisher>>
         visionSensorPublishers;
     std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
         rangeVisionSensorPublishers;
@@ -125,7 +129,7 @@ private:
     void updateForceSensor(ForceSensor* sensor, rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr publisher);
     void updateRateGyroSensor(RateGyroSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
     void updateAccelSensor(AccelerationSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
-    void updateVisionSensor(Camera* sensor, std::shared_ptr<image_transport::CameraPublisher> publisher);
+    void updateVisionSensor(Camera* sensor, std::shared_ptr<image_transport::Publisher> publisher);
     void updateRangeVisionSensor(RangeCamera* sensor, rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher);
     void updateRangeSensor(RangeSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher);
     void update3DRangeSensor(RangeSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr publisher);

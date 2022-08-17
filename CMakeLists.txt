@@ -21,7 +21,7 @@ if(CHOREONOID_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD ${CHOREONOID_CXX_STANDARD})
   set(CMAKE_CXX_EXTENSIONS OFF)
 else()
-  add_compile_options(-std=c++14)
+  add_compile_options(-std=c++17)
 endif()
 
 #include_directories(${catkin_INCLUDE_DIRS})

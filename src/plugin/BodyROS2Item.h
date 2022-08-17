@@ -96,21 +96,31 @@ private:
 
 //    image_transport::ImageTransport image_transport_;
 
-    std::vector<rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr> force_sensor_publishers_;
-    std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> rate_gyro_sensor_publishers_;
-    std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr> accel_sensor_publishers_;
-    std::vector<std::shared_ptr<image_transport::CameraPublisher>> vision_sensor_publishers_;
-    std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr> range_vision_sensor_publishers_;
-    std::vector<rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr> range_sensor_publishers_;
-    std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr> range_sensor_pc_publishers_;
+    std::vector<rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr>
+        forceSensorPublishers;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr>
+        rateGyroSensorPublishers;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr>
+        accelSensorPublishers;
+    std::vector<std::shared_ptr<image_transport::CameraPublisher>>
+        visionSensorPublishers;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
+        rangeVisionSensorPublishers;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr>
+        rangeSensorPublishers;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr>
+        rangeSensorPcPublishers;
 
-    std::vector<std::shared_ptr<rclcpp::ServiceBase>> force_sensor_switch_servers_;
-    std::vector<std::shared_ptr<rclcpp::ServiceBase>> rate_gyro_sensor_switch_servers_;
-    std::vector<std::shared_ptr<rclcpp::ServiceBase>> accel_sensor_switch_servers_;
-    std::vector<std::shared_ptr<rclcpp::ServiceBase>> vision_sensor_switch_servers_;
-    std::vector<std::shared_ptr<rclcpp::ServiceBase>> range_vision_sensor_switch_servers_;
-    std::vector<std::shared_ptr<rclcpp::ServiceBase>> range_sensor_switch_servers_;
-    std::vector<std::shared_ptr<rclcpp::ServiceBase>> range_sensor_pc_switch_servers_;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> forceSensorSwitchServers;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>>
+        rateGyroSensorSwitchServers;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> accelSensorSwitchServers;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> visionSensorSwitchServers;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>>
+        rangeVisionSensorSwitchServers;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> rangeSensorSwitchServers;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>>
+        rangeSensorPcSwitchServers;
 
     void updateForceSensor(ForceSensor* sensor, rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr publisher);
     void updateRateGyroSensor(RateGyroSensor* sensor, rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);

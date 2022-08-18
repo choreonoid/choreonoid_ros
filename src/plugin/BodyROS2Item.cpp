@@ -27,7 +27,9 @@ void BodyROS2Item::initializeClass(ExtensionManager *ext) {
 BodyROS2Item::BodyROS2Item() : os(MessageView::instance()->cout()) {
   node_ = std::make_shared<rclcpp::Node>("choreonoid_body_ros2",
                                          rclcpp::NodeOptions());
-  image_transport_ = std::make_shared<image_transport::ImageTransport>(node_);
+  std::cout << "node name : " << node_->get_name() << std::endl;
+  std::cout << "node namespace : " << node_->get_namespace() << std::endl;
+  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
   std::cout << "constructing BodyROS2Item class..." << std::endl;
   io = nullptr;
   joint_state_update_rate_ = 100.0;
@@ -37,7 +39,10 @@ BodyROS2Item::BodyROS2Item(const BodyROS2Item &org)
     : ControllerItem(org), os(MessageView::instance()->cout()) {
   node_ = std::make_shared<rclcpp::Node>("choreonoid_body_ros2",
                                          rclcpp::NodeOptions());
-  image_transport_ = std::make_shared<image_transport::ImageTransport>(node_);
+  std::cout << "node name : " << node_->get_name() << std::endl;
+  std::cout << "node namespace : " << node_->get_namespace() << std::endl;
+  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
+
   std::cout << "constructing BodyROS2Item class..." << std::endl;
   io = nullptr;
   joint_state_update_rate_ = 100.0;
@@ -206,43 +211,48 @@ void BodyROS2Item::createSensors(BodyPtr body) {
   }
 
   std::cout << "Start creating vision sensors" << std::endl;
+  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
 
   visionSensorPublishers.clear();
   visionSensorPublishers.reserve(visionSensors_.size());
   visionSensorSwitchServers.clear();
   visionSensorSwitchServers.reserve(visionSensors_.size());
 
-  for (auto &&sensor : visionSensors_) {
+  for (CameraPtr sensor : visionSensors_) {
     std::string name = sensor->name();
     std::cout << "-- camera name : " << name << " --" << std::endl;
     std::replace(name.begin(), name.end(), '-', '_');
 
-    auto raw_publisher = image_transport_->advertise(name + "/image_raw", 1);
-    std::shared_ptr<image_transport::Publisher> publisher(
-        &raw_publisher, [](image_transport::Publisher *) {});
+//    auto raw_publisher = image_transport::create_publisher(node_.get(), name + "/image_raw");
+//    std::shared_ptr<image_transport::Publisher> publisher(
+//        &raw_publisher, [](image_transport::Publisher *) {});
+
+    auto publisher = node_->create_publisher<sensor_msgs::msg::Image>(name + "/image_raw",1);
 
     std::cout << "create vision sensor publisher" << std::endl;
+//    visionSensorPublishers.push_back(publisher);
     visionSensorPublishers.push_back(publisher);
     sensor->sigStateChanged().connect([this, sensor, publisher]() {
       std::cout << "updateVisionSensor" << std::endl;
       updateVisionSensor(sensor, publisher);
     });
-    visionSensorPublishers.push_back(publisher);
+
     SetBoolCallback requestCallback =
         std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
     visionSensorSwitchServers.push_back(
         node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
                                                       requestCallback));
+    std::cout << visionSensorPublishers.size() << std::endl;
     RCLCPP_INFO(node_->get_logger(), "Create RGB camera %s (%f Hz)",
                 sensor->name().c_str(), sensor->frameRate());
   }
+  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
 
   rangeVisionSensorPublishers.clear();
   rangeVisionSensorPublishers.reserve(rangeVisionSensors_.size());
   rangeVisionSensorSwitchServers.clear();
   rangeVisionSensorSwitchServers.reserve(rangeVisionSensors_.size());
   for (auto sensor : rangeVisionSensors_) {
-    sensor->on();
     std::string name = sensor->name();
     std::replace(name.begin(), name.end(), '-', '_');
     auto publisher = node_->create_publisher<sensor_msgs::msg::PointCloud2>(
@@ -391,7 +401,7 @@ void BodyROS2Item::updateAccelSensor(
 }
 
 void BodyROS2Item::updateVisionSensor(
-    Camera *sensor, std::shared_ptr<image_transport::Publisher> publisher) {
+    Camera *sensor, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher) {
   if (!sensor->on()) {
     std::cout << "not on" << std::endl;
     return;
@@ -418,6 +428,7 @@ void BodyROS2Item::updateVisionSensor(
   // TODO
   sensor_msgs::msg::CameraInfo camera_info;
   std::cout << "publish image sensor" << std::endl;
+  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
   publisher->publish(vision);
 }
 

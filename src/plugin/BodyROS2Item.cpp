@@ -620,11 +620,10 @@ void BodyROS2Item::switchDevice(
 
 void BodyROS2Item::stop()
 {
-    if (rclcpp::ok()) {
-
+    if(rclcpp::ok()){
+        //stopPublishing();
         rclcpp::shutdown();
     }
-
     return;
 }
 

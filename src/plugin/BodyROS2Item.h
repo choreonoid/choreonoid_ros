@@ -85,10 +85,10 @@ private:
   /* joint states */
   sensor_msgs::msg::JointState joint_state_;
   std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::JointState>>
-      joint_state_publisher_;
-  double joint_state_update_rate_;
-  double joint_state_update_period_;
-  double joint_state_last_update_;
+      jointStatePublisher;
+  double jointStateUpdateRate;
+  double jointStateUpdatePeriod;
+  double jointStateLastUpdate;
 
   ControllerIO *io;
   double controlTime_;

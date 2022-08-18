@@ -1,8 +1,8 @@
 #ifndef CNOID_ROS_PLUGIN_WORLD_ROS_ITEM_H
 #define CNOID_ROS_PLUGIN_WORLD_ROS_ITEM_H
 
-#include <cnoid/Item>
 #include "exportdecl.h"
+#include <cnoid/Item>
 
 namespace cnoid {
 
@@ -12,7 +12,7 @@ public:
     static void initializeClass(ExtensionManager* ext);
 
     WorldROS2Item();
-    WorldROS2Item(const WorldROS2Item & org);
+    WorldROS2Item(const WorldROS2Item& org);
     virtual ~WorldROS2Item();
     void setMaxClockPublishingRate(double rate);
 
@@ -30,7 +30,6 @@ private:
 
 typedef ref_ptr<WorldROS2Item> WorldROSItemPtr;
 
-}
+}  // namespace cnoid
 
 #endif
-

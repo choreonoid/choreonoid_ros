@@ -27,9 +27,6 @@ void BodyROS2Item::initializeClass(ExtensionManager *ext) {
 BodyROS2Item::BodyROS2Item() : os(MessageView::instance()->cout()) {
   node_ = std::make_shared<rclcpp::Node>("choreonoid_body_ros2",
                                          rclcpp::NodeOptions());
-  std::cout << "node name : " << node_->get_name() << std::endl;
-  std::cout << "node namespace : " << node_->get_namespace() << std::endl;
-  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
   std::cout << "constructing BodyROS2Item class..." << std::endl;
   io = nullptr;
   joint_state_update_rate_ = 100.0;
@@ -39,10 +36,6 @@ BodyROS2Item::BodyROS2Item(const BodyROS2Item &org)
     : ControllerItem(org), os(MessageView::instance()->cout()) {
   node_ = std::make_shared<rclcpp::Node>("choreonoid_body_ros2",
                                          rclcpp::NodeOptions());
-  std::cout << "node name : " << node_->get_name() << std::endl;
-  std::cout << "node namespace : " << node_->get_namespace() << std::endl;
-  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
-
   std::cout << "constructing BodyROS2Item class..." << std::endl;
   io = nullptr;
   joint_state_update_rate_ = 100.0;
@@ -211,7 +204,6 @@ void BodyROS2Item::createSensors(BodyPtr body) {
   }
 
   std::cout << "Start creating vision sensors" << std::endl;
-  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
 
   visionSensorPublishers.clear();
   visionSensorPublishers.reserve(visionSensors_.size());
@@ -223,14 +215,15 @@ void BodyROS2Item::createSensors(BodyPtr body) {
     std::cout << "-- camera name : " << name << " --" << std::endl;
     std::replace(name.begin(), name.end(), '-', '_');
 
-//    auto raw_publisher = image_transport::create_publisher(node_.get(), name + "/image_raw");
-//    std::shared_ptr<image_transport::Publisher> publisher(
-//        &raw_publisher, [](image_transport::Publisher *) {});
+    //    auto raw_publisher = image_transport::create_publisher(node_.get(),
+    //    name + "/image_raw"); std::shared_ptr<image_transport::Publisher>
+    //    publisher(
+    //        &raw_publisher, [](image_transport::Publisher *) {});
 
-    auto publisher = node_->create_publisher<sensor_msgs::msg::Image>(name + "/image_raw",1);
+    auto publisher = node_->create_publisher<sensor_msgs::msg::Image>(
+        name + "/image_raw", 1);
 
     std::cout << "create vision sensor publisher" << std::endl;
-//    visionSensorPublishers.push_back(publisher);
     visionSensorPublishers.push_back(publisher);
     sensor->sigStateChanged().connect([this, sensor, publisher]() {
       std::cout << "updateVisionSensor" << std::endl;
@@ -246,7 +239,6 @@ void BodyROS2Item::createSensors(BodyPtr body) {
     RCLCPP_INFO(node_->get_logger(), "Create RGB camera %s (%f Hz)",
                 sensor->name().c_str(), sensor->frameRate());
   }
-  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
 
   rangeVisionSensorPublishers.clear();
   rangeVisionSensorPublishers.reserve(rangeVisionSensors_.size());
@@ -401,7 +393,8 @@ void BodyROS2Item::updateAccelSensor(
 }
 
 void BodyROS2Item::updateVisionSensor(
-    Camera *sensor, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher) {
+    Camera *sensor,
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher) {
   if (!sensor->on()) {
     std::cout << "not on" << std::endl;
     return;
@@ -428,7 +421,6 @@ void BodyROS2Item::updateVisionSensor(
   // TODO
   sensor_msgs::msg::CameraInfo camera_info;
   std::cout << "publish image sensor" << std::endl;
-  std::cout << "expand : " << rclcpp::expand_topic_or_service_name("Kinect/image_raw",node_->get_name(),node_->get_namespace()) << std::endl;
   publisher->publish(vision);
 }
 

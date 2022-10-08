@@ -21,11 +21,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download & execute install-requisites.sh in chorenoid
-        run: |
-          curl https://raw.githubusercontent.com/choreonoid/choreonoid/master/misc/script/install-requisites-ubuntu-20.04.sh \
-            --output /home/runner/work/choreonoid_ros2/install-requisites.sh  \
-            && sh /home/runner/work/choreonoid_ros2/install-requisites.sh
+      - name: Install dependencies of choreonoid
+        uses: shinhwagk/remote-bash@0.0.1
+        with:
+          args: arg1 arg2
+        env:
+          REMOTE_BASH_URL: https://raw.githubusercontent.com/choreonoid/choreonoid/master/misc/script/install-requisites-ubuntu-20.04.sh
 
       - name: Run build test
         uses: ros-tooling/action-ros-ci@v0.2

@@ -27,7 +27,7 @@ jobs:
           args: https://raw.githubusercontent.com/choreonoid/choreonoid/master/misc/script/install-requisites-ubuntu-20.04.sh
 
       - name: Execute dependencies of chorenoid
-        run: sh .github/workflows/install-requisites.sh
+        run: sh .github/workflows/install-requisites-ubuntu-20.04.sh
 
       - name: Run build test
         uses: ros-tooling/action-ros-ci@v0.2

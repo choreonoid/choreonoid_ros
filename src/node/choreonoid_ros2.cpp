@@ -7,6 +7,7 @@
 #include <cnoid/Plugin>
 #include <cnoid/PluginManager>
 #include <cnoid/ProjectManager>
+#include <cnoid/UTF8>
 #include <cstdlib>
 #include <rclcpp/rclcpp.hpp>
 #include <regex>
@@ -31,53 +32,33 @@ int main(int argc, char** argv)
     int rosargc = rosargs.size();
     char** rosargv = &rosargs.front();
     rclcpp::init(rosargc, rosargv);
-    //    ros::init(rosargc, rosargv, "choreonoid", ros::init_options::NoSigintHandler);
-
-    //    ros::master::setRetryTimeout(ros::WallDuration(1));
-
-
-    //    std::unique_ptr<ros::AsyncSpinner> spinner;
-    //    spinner.reset(new ros::AsyncSpinner(0));
-    //    spinner->start();
 
     argc = args.size();
     argv = &args.front();
     cnoid::App app(argc, argv, "Choreonoid-ROS2", "Choreonoid");
-    PluginManager::instance()->addPluginPath(
-        ament_index_cpp::get_package_share_directory("choreonoid_ros")
-        + "/../../lib");
-    app.initialize();
-    ProjectManager::instance()->loadBuiltinProject(
-        ":/Base/project/layout.cnoid");
 
-    auto ros2PluginRaw = PluginManager::instance()->findPlugin("ROS2");
-    ROS2Plugin* ros2Plugin = static_cast<ROS2Plugin*>(ros2PluginRaw);
+    auto plugin_manager = cnoid::PluginManager::instance();
 
-    if (!ros2Plugin) {
-        //        auto& errorMessage = ProjectManager::instance()->getErrorMessage("ROS2");
-        //        if(errorMessage.empty()){
-        //            cerr << "ROS2 plugin is not found." << endl;
-        //        } else {
-        //            cerr << "ROS2 plugin cannot be loaded.\n";
-        //            cerr << errorMessage << endl;
-        //        }
-        return 1;
+    if(auto pluginPath = getenv("CNOID_PLUGIN_PATH")){
+      plugin_manager->addPluginPath(toUTF8(pluginPath));
     }
 
-    using rclcpp::executors::MultiThreadedExecutor;
-    MultiThreadedExecutor executor;
+    plugin_manager->addPluginPath(
+        ament_index_cpp::get_package_share_directory("choreonoid_ros")
+        + "/../../lib/choreonoid-1.8");
+
+    app.requirePluginToCustomizeApplication("ROS2");
+
+    ROS2Plugin* ros2Plugin = static_cast<ROS2Plugin*>(plugin_manager->findPlugin("ROS2"));
+
+    rclcpp::executors::MultiThreadedExecutor executor;
     std::shared_ptr<rclcpp::Node> node;
     node.reset(ros2Plugin);
     executor.add_node(node);
 
-    if (!ros2Plugin->isActive()) {
-        cerr << "ROS2 plugin is not active." << endl;
-        return 1;
-    }
-
-    app.exec();
+    int ret = app.exec();
 
     rclcpp::shutdown();
 
-    return 0;
+    return ret;
 }

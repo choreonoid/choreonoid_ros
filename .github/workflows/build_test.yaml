@@ -21,13 +21,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download install-requisites.sh in chorenoid
-        uses: wei/curl@master
-        with:
-          args: https://raw.githubusercontent.com/choreonoid/choreonoid/master/misc/script/install-requisites-ubuntu-20.04.sh
-
-      - name: Execute dependencies of chorenoid
-        run: sh install-requisites-ubuntu-20.04.sh
+      - name: Download & execute install-requisites.sh in chorenoid
+        run: |
+          curl https://raw.githubusercontent.com/choreonoid/choreonoid/master/misc/script/install-requisites-ubuntu-20.04.sh \
+            --output /home/runner/work/choreonoid_ros2/install-requisites.sh  \
+            && sh /home/runner/work/choreonoid_ros2/install-requisites.sh
 
       - name: Run build test
         uses: ros-tooling/action-ros-ci@v0.2

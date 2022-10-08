@@ -1,6 +1,7 @@
 #include "WorldROSItem.h"
 #include "BodyROSItem.h"
 #include "ROSControlItem.h"
+#include "LinkVelocityControllerROSItem.h"
 #include "deprecated/BodyPublisherItem.h"
 #include <cnoid/Plugin>
 #include <cnoid/AppCustomizationUtil>
@@ -57,6 +58,7 @@ public:
         WorldROSItem::initializeClass(this);
         BodyROSItem::initializeClass(this);
         ROSControlItem::initializeClass(this);
+        LinkVelocityControllerROSItem::initializeClass(this);
         BodyPublisherItem::initializeClass(this);
         
         return true;

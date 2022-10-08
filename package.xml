@@ -7,6 +7,7 @@
   <license>MIT</license>
   <author email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</author>
   <author email="groadpg@gmail.com">Ryodo Tanaka</author>
+  <author email="yuki.st16@gmail.com">Yuki Onishi</author>
   <url type="website">http://choreonoid.org</url>
   <url type="repository">https://github.com/choreonoid/choreonoid_ros_samples.git</url>
 
@@ -16,6 +17,7 @@
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>image_transport</depend>
+  <!-- For ros_control-->
   <depend>pluginlib</depend>
   <depend>angles</depend>
   <depend>controller_manager</depend>
@@ -23,6 +25,9 @@
   <depend>joint_limits_interface</depend>
   <depend>transmission_interface</depend>
   <depend>urdf</depend>
+  <!-- For link velocity control -->
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
 
   <export>
     <build_type>cmake</build_type>

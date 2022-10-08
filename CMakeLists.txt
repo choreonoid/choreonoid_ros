@@ -23,6 +23,10 @@ find_package(
   joint_limits_interface
   transmission_interface
   urdf
+
+  # For link velocity control
+  geometry_msgs
+  nav_msgs
   )
 
 catkin_package(SKIP_CMAKE_CONFIG_GENERATION SKIP_PKG_CONFIG_GENERATION)

@@ -8,6 +8,7 @@ choreonoid_add_plugin(${target}
   BodyROSItem.cpp
   ROSControlItem.cpp
   RobotHWSim.h
+  LinkVelocityControllerROSItem.cpp
   deprecated/BodyPublisherItem.cpp
   ${mofiles}
   )

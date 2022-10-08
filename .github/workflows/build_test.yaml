@@ -1,0 +1,48 @@
+name: build test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-20.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+    env:
+      ROS_DISTRO: foxy
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies of chorenoid
+        run: |
+          curl --silent --show-error \
+            --output .github/workflows/install-requisites.sh \
+            https://raw.githubusercontent.com/choreonoid/choreonoid/master/misc/script/install-requisites-ubuntu-20.04.sh \ 
+          && sh .github/workflows/install-requisites.sh
+
+      - name: Run build test
+        uses: ros-tooling/action-ros-ci@v0.2
+        with:
+          package-name: ${{ steps.list_packages.outputs.package_list }}
+          target-ros2-distro: foxy
+          vcs-repo-file-url: dependency.repos
+          extra-cmake-args: -DWITH_INTEGRATION_TEST=ON
+          colcon-defaults: |
+            {
+              "build": {
+                "mixin": ["coverage-gcc", "coverage-pytest"]
+              },
+              "test": {
+                "mixin": ["coverage-pytest"]
+              }
+            }
+          # If possible, pin the repository in the workflow to a specific commit to avoid
+          # changes in colcon-mixin-repository from breaking your tests.
+          colcon-mixin-repository: https://raw.githubusercontent.com/colcon/colcon-mixin-repository/1ddb69bedfd1f04c2f000e95452f7c24a4d6176b/index.yaml

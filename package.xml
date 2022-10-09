@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>choreonoid_ros</name>
+  <name>choreonoid_ros2</name>
   <version>1.7.0</version>
   <description>The package for using Choreonoid as a ROS node</description>
   <maintainer email="s.nakaoka@gmail.com">Shin'ichiro Nakaoka</maintainer>

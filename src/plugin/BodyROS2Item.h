@@ -116,10 +116,10 @@ private:
         rateGyroSensorPublishers;
     std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr>
         accelSensorPublishers;
-    //    std::vector<std::shared_ptr<image_transport::Publisher>>
-    //        visionSensorPublishers;
-    std::vector<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>
-        visionSensorPublishers;
+
+    std::shared_ptr<image_transport::ImageTransport> image_transport = nullptr;
+    std::vector<image_transport::Publisher> visionSensorPublishers;
+
     std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
         rangeVisionSensorPublishers;
     std::vector<rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr>
@@ -148,7 +148,7 @@ private:
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
     void updateVisionSensor(
         Camera *sensor,
-        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher);
+        image_transport::Publisher & publisher);
     void updateRangeVisionSensor(
         RangeCamera *sensor,
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher);
@@ -163,12 +163,6 @@ private:
                       std_srvs::srv::SetBool::Response::SharedPtr response,
                       Device *sensor);
     builtin_interfaces::msg::Time getStampMsgFromSec(double sec);
-
-    /**
-    @brief Stop publish.
-    This method call from BodyROS2Item::stop.
-   */
-    //    void stop_publish();
 };
 
 typedef ref_ptr<BodyROS2Item> BodyROS2ItemPtr;

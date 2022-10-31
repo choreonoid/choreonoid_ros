@@ -4,7 +4,6 @@
 #include <cnoid/Link>
 #include <cnoid/MessageView>
 #include <cnoid/PutPropertyFunction>
-//#include <cnoid/Sensor>
 
 #include <geometry_msgs/msg/point32.hpp>
 #include <geometry_msgs/msg/wrench_stamped.hpp>
@@ -31,7 +30,6 @@ using std::placeholders::_2;
 
 void BodyROS2Item::initializeClass(ExtensionManager *ext)
 {
-    std::cout << "initialize BodyROS2Item" << std::endl;
     ext->itemManager().registerClass<BodyROS2Item>(N_("BodyROS2Item"));
     ext->itemManager().addCreationPanel<BodyROS2Item>();
 }
@@ -42,7 +40,7 @@ BodyROS2Item::BodyROS2Item()
 {
     node_ = std::make_shared<rclcpp::Node>("choreonoid_body_ros2",
                                            rclcpp::NodeOptions());
-    std::cout << "constructing BodyROS2Item class..." << std::endl;
+    image_transport = std::make_shared<image_transport::ImageTransport>(node_);
     io = nullptr;
     jointStateUpdateRate = 100.0;
 }
@@ -54,7 +52,7 @@ BodyROS2Item::BodyROS2Item(const BodyROS2Item &org)
 {
     node_ = std::make_shared<rclcpp::Node>("choreonoid_body_ros2",
                                            rclcpp::NodeOptions());
-    std::cout << "constructing BodyROS2Item class..." << std::endl;
+    image_transport = std::make_shared<image_transport::ImageTransport>(node_);
     io = nullptr;
     jointStateUpdateRate = 100.0;
 }
@@ -98,7 +96,6 @@ void BodyROS2Item::doPutProperties(PutPropertyFunction &putProperty)
 
 bool BodyROS2Item::initialize(ControllerIO *io)
 {
-    std::cout << "initialize BodyROS2Item" << std::endl;
     if (!io->body()) {
         MessageView::instance()
             ->putln(format(_("BodyROS2Item \"{0}\" is invalid because it is "
@@ -263,15 +260,9 @@ void BodyROS2Item::createSensors(BodyPtr body)
         std::string name = sensor->name();
         std::replace(name.begin(), name.end(), '-', '_');
 
-        //    auto raw_publisher = image_transport::create_publisher(node_.get(),
-        //    name + "/image_raw"); std::shared_ptr<image_transport::Publisher>
-        //    publisher(
-        //        &raw_publisher, [](image_transport::Publisher *) {});
-
-        auto publisher = node_->create_publisher<sensor_msgs::msg::Image>(
-            name + "/image_raw", 1);
-        visionSensorPublishers.push_back(publisher);
-        sensor->sigStateChanged().connect([this, sensor, publisher]() {
+        visionSensorPublishers.push_back(image_transport->advertise(name, 1));
+        auto & publisher = visionSensorPublishers.back();
+        sensor->sigStateChanged().connect([this, sensor, &publisher]() {
             updateVisionSensor(sensor, publisher);
         });
         SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice,
@@ -282,7 +273,6 @@ void BodyROS2Item::createSensors(BodyPtr body)
         visionSensorSwitchServers.push_back(
             node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
                                                           requestCallback));
-        std::cout << visionSensorPublishers.size() << std::endl;
         RCLCPP_INFO(node_->get_logger(),
                     "Create RGB camera %s (%f Hz)",
                     sensor->name().c_str(),
@@ -454,12 +444,12 @@ void BodyROS2Item::updateAccelSensor(
 
 void BodyROS2Item::updateVisionSensor(
     Camera *sensor,
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher)
+    image_transport::Publisher & publisher)
 {
     if (!sensor->on()) {
         return;
     }
-    std::cout << "updateVisionSensor" << std::endl;
+
     sensor_msgs::msg::Image vision;
     vision.header.stamp = getStampMsgFromSec(io->currentTime());
     vision.header.frame_id = sensor->name();
@@ -480,10 +470,7 @@ void BodyROS2Item::updateVisionSensor(
     std::memcpy(&(vision.data[0]),
                 &(sensor->image().pixels()[0]),
                 vision.step * vision.height);
-    // TODO
-    sensor_msgs::msg::CameraInfo camera_info;
-    std::cout << "publish image sensor" << std::endl;
-    publisher->publish(vision);
+    publisher.publish(vision);
 }
 
 
@@ -639,47 +626,11 @@ void BodyROS2Item::input() {}
 
 void BodyROS2Item::output() {}
 
-// void BodyROS2Item::stop_publish()
-//{
-//     size_t i;
-//
-//     for (i = 0; i < forceSensorPublishers.size(); i++) {
-//         forceSensorPublishers[i].shutdown();
-//     }
-//
-//     for (i = 0; i < rateGyroSensorPublishers.size(); i++) {
-//         rateGyroSensorPublishers[i].shutdown();
-//     }
-//
-//     for (i = 0; i < accelSensorPublishers.size(); i++) {
-//         accelSensorPublishers[i].shutdown();
-//     }
-//
-//     for (i = 0; i < visionSensorPublishers.size(); i++) {
-//         visionSensorPublishers[i].shutdown();
-//     }
-//
-//     for (i = 0; i < rangeVisionSensorPublishers.size(); i++) {
-//         rangeVisionSensorPublishers[i].shutdown();
-//     }
-//
-//     for (i = 0; i < rangeSensorPublishers.size(); i++) {
-//         rangeSensorPublishers[i].shutdown();
-//     }
-//
-//     for (i = 0; i < rangeSensorPcPublishers.size(); i++) {
-//         rangeSensorPcPublishers[i].shutdown();
-//     }
-//
-//     return;
-// }
-
 void BodyROS2Item::switchDevice(
     std_srvs::srv::SetBool::Request::ConstSharedPtr request,
     std_srvs::srv::SetBool::Response::SharedPtr response,
     Device *sensor)
 {
-    std::cout << "switchDevice : " << sensor->name() << std::endl;
     sensor->on(request->data);
     response->success = (request->data == sensor->on());
 }
@@ -687,7 +638,6 @@ void BodyROS2Item::switchDevice(
 void BodyROS2Item::stop()
 {
     if (rclcpp::ok()) {
-        //stopPublishing();
         rclcpp::shutdown();
     }
     return;

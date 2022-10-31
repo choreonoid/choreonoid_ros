@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     }
 
     plugin_manager->addPluginPath(
-        ament_index_cpp::get_package_share_directory("choreonoid_ros")
+        ament_index_cpp::get_package_share_directory("choreonoid_ros2")
         + "/../../lib/choreonoid-1.8");
 
     app.requirePluginToCustomizeApplication("ROS2");

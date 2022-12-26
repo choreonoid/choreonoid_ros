@@ -386,9 +386,9 @@ void BodyROSItem::updateAccelSensor
     sensor_msgs::Imu accel;
     accel.header.stamp.fromSec(io->currentTime());
     accel.header.frame_id = sensor->name();
-    accel.linear_acceleration.x = sensor->dv()[0] / 10.0;
-    accel.linear_acceleration.y = sensor->dv()[1] / 10.0;
-    accel.linear_acceleration.z = sensor->dv()[2] / 10.0;
+    accel.linear_acceleration.x = sensor->dv()[0];
+    accel.linear_acceleration.y = sensor->dv()[1];
+    accel.linear_acceleration.z = sensor->dv()[2];
     publisher.publish(accel);
 }
 

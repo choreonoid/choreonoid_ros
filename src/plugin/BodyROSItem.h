@@ -8,6 +8,7 @@
 #include <cnoid/ForceSensor>
 #include <cnoid/RateGyroSensor>
 #include <cnoid/AccelerationSensor>
+#include <cnoid/Imu>
 #include <cnoid/Camera>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
@@ -36,7 +37,7 @@ public:
     BodyROSItem(const BodyROSItem& org);
     virtual ~BodyROSItem();
     void createSensors(BodyPtr body);
-    
+
     virtual bool initialize(ControllerIO* io) override;
     virtual bool start() override;
     virtual double timeStep() const override {
@@ -46,17 +47,18 @@ public:
     virtual bool control() override;
     virtual void output() override;
     virtual void stop() override;
-    
+
     const Body* body() const { return simulationBody; };
     const DeviceList<ForceSensor>& forceSensors() const { return forceSensors_; }
     const DeviceList<RateGyroSensor>& gyroSensors() const { return gyroSensors_; }
     const DeviceList<AccelerationSensor>& accelSensors() const { return accelSensors_; }
+    const DeviceList<Imu>& imus() const { return imus_; }
     const DeviceList<Camera>& visionSensors() const { return visionSensors_; }
     const DeviceList<RangeCamera>& rangeVisionSensors() const { return rangeVisionSensors_; }
     const DeviceList<RangeSensor>& rangeSensors() const { return rangeSensors_; }
-    
+
     double controlTime() const { return controlTime_; }
-    
+
     void setModuleName(const std::string& name);
 
 protected:
@@ -70,6 +72,7 @@ private:
     DeviceList<ForceSensor> forceSensors_;
     DeviceList<RateGyroSensor> gyroSensors_;
     DeviceList<AccelerationSensor> accelSensors_;
+    DeviceList<Imu> imus_;
     DeviceList<Camera> visionSensors_;
     DeviceList<RangeCamera> rangeVisionSensors_;
     DeviceList<RangeSensor> rangeSensors_;
@@ -89,10 +92,11 @@ private:
     std::string bodyName;
 
     std::unique_ptr<ros::NodeHandle> rosNode;
- 
+
     std::vector<ros::Publisher> forceSensorPublishers;
     std::vector<ros::Publisher> rateGyroSensorPublishers;
     std::vector<ros::Publisher> accelSensorPublishers;
+    std::vector<ros::Publisher> imuPublishers;
     std::vector<image_transport::Publisher> visionSensorPublishers;
     std::vector<ros::Publisher> rangeVisionSensorPublishers;
     std::vector<ros::Publisher> rangeSensorPublishers;
@@ -101,6 +105,7 @@ private:
     std::vector<ros::ServiceServer> forceSensorSwitchServers;
     std::vector<ros::ServiceServer> rateGyroSensorSwitchServers;
     std::vector<ros::ServiceServer> accelSensorSwitchServers;
+    std::vector<ros::ServiceServer> imuSwitchServers;
     std::vector<ros::ServiceServer> visionSensorSwitchServers;
     std::vector<ros::ServiceServer> rangeVisionSensorSwitchServers;
     std::vector<ros::ServiceServer> rangeSensorSwitchServers;
@@ -112,6 +117,7 @@ private:
         const RateGyroSensorPtr& sensor, const ros::Publisher& publisher);
     void updateAccelSensor(
         const AccelerationSensorPtr& sensor, const ros::Publisher& publisher);
+    void updateImu(const ImuPtr& sensor, const ros::Publisher& publisher);
     void updateVisionSensor(
         const CameraPtr& sensor, const image_transport::Publisher& publisher);
     void updateRangeVisionSensor(
@@ -132,6 +138,6 @@ private:
 };
 
 typedef ref_ptr<BodyROSItem> BodyROSItemPtr;
-}
+}  // namespace cnoid
 
 #endif

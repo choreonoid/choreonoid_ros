@@ -145,6 +145,7 @@ void BodyROSItem::createSensors(BodyPtr body)
     forceSensors_.assign(devices.extract<ForceSensor>());
     gyroSensors_.assign(devices.extract<RateGyroSensor>());
     accelSensors_.assign(devices.extract<AccelerationSensor>());
+    imus_.assign(devices.extract<Imu>());
     visionSensors_.assign(devices.extract<Camera>());
     rangeVisionSensors_.assign(devices.extract<RangeCamera>());
     rangeSensors_.assign(devices.extract<RangeSensor>());
@@ -177,7 +178,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             rosNode->advertiseService(name + "/set_enabled", requestCallback));
         ROS_INFO("Create force sensor %s", sensor->name().c_str());
     }
-    
+
     rateGyroSensorPublishers.clear();
     rateGyroSensorPublishers.reserve(gyroSensors_.size());
     rateGyroSensorSwitchServers.clear();
@@ -197,7 +198,7 @@ void BodyROSItem::createSensors(BodyPtr body)
             rosNode->advertiseService(name + "/set_enabled", requestCallback));
         ROS_INFO("Create gyro sensor %s", sensor->name().c_str());
     }
-    
+
     accelSensorPublishers.clear();
     accelSensorPublishers.reserve(accelSensors_.size());
     accelSensorSwitchServers.clear();
@@ -217,7 +218,27 @@ void BodyROSItem::createSensors(BodyPtr body)
             rosNode->advertiseService(name + "/set_enabled", requestCallback));
         ROS_INFO("Create accel sensor %s", sensor->name().c_str());
     }
-    
+
+    imuPublishers.clear();
+    imuPublishers.reserve(imus_.size());
+    imuSwitchServers.clear();
+    imuSwitchServers.reserve(imus_.size());
+    for (ImuPtr sensor : imus_) {
+        std::string name = sensor->name();
+        std::replace(name.begin(), name.end(), '-', '_');
+        const ros::Publisher publisher
+            = rosNode->advertise<sensor_msgs::Imu>(name, 1);
+        sensor->sigStateChanged().connect([this, sensor, publisher]() {
+            updateImu(sensor, publisher);
+        });
+        accelSensorPublishers.push_back(publisher);
+        boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
+            = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+        accelSensorSwitchServers.push_back(
+            rosNode->advertiseService(name + "/set_enabled", requestCallback));
+        ROS_INFO("Create IMU %s", sensor->name().c_str());
+    }
+
     image_transport::ImageTransport it(*rosNode);
     visionSensorPublishers.clear();
     visionSensorPublishers.reserve(visionSensors_.size());
@@ -239,7 +260,7 @@ void BodyROSItem::createSensors(BodyPtr body)
         ROS_INFO("Create RGB camera %s (%f Hz)",
                  sensor->name().c_str(), sensor->frameRate());
     }
-    
+
     rangeVisionSensorPublishers.clear();
     rangeVisionSensorPublishers.reserve(rangeVisionSensors_.size());
     rangeVisionSensorSwitchServers.clear();
@@ -272,7 +293,7 @@ void BodyROSItem::createSensors(BodyPtr body)
 #else
     typedef sensor_msgs::PointCloud2 PointCloudTypeForRangeSensor;
 #endif
-    
+
     rangeSensorPublishers.clear();
     rangeSensorPublishers.reserve(rangeSensors_.size());
     rangeSensorSwitchServers.clear();
@@ -390,6 +411,25 @@ void BodyROSItem::updateAccelSensor
     accel.linear_acceleration.y = sensor->dv()[1];
     accel.linear_acceleration.z = sensor->dv()[2];
     publisher.publish(accel);
+}
+
+
+void BodyROSItem::updateImu
+(const ImuPtr& sensor, const ros::Publisher& publisher)
+{
+    if(!sensor->on()){
+        return;
+    }
+    sensor_msgs::Imu imu;
+    imu.header.stamp.fromSec(io->currentTime());
+    imu.header.frame_id = sensor->name();
+    imu.angular_velocity.x = sensor->w()[0];
+    imu.angular_velocity.y = sensor->w()[1];
+    imu.angular_velocity.z = sensor->w()[2];
+    imu.linear_acceleration.x = sensor->dv()[0];
+    imu.linear_acceleration.y = sensor->dv()[1];
+    imu.linear_acceleration.z = sensor->dv()[2];
+    publisher.publish(imu);
 }
 
 
@@ -568,7 +608,7 @@ void BodyROSItem::update3DRangeSensor
     if(hasRo){
         Ro = sensor->opticalFrameRotation().cast<float>();
     }
-    
+
     for(int pitchIndex = 0; pitchIndex < numPitchSamples; ++pitchIndex){
         const double pitchAngle =
             pitchIndex * pitchStep - sensor->pitchRange() / 2.0;
@@ -615,12 +655,12 @@ void BodyROSItem::update3DRangeSensor
     const double pitchStep = sensor->pitchStep();
     const int numYawSamples = sensor->numYawSamples();
     const double yawStep = sensor->yawStep();
-        
+
     for(int pitch=0; pitch < numPitchSamples; ++pitch){
         const double pitchAngle = pitch * pitchStep - sensor->pitchRange() / 2.0;
         const double cosPitchAngle = cos(pitchAngle);
         const int srctop = pitch * numYawSamples;
-            
+
         for(int yaw=0; yaw < numYawSamples; ++yaw){
             const double distance = sensor->rangeData()[srctop + yaw];
             if(distance <= sensor->maxDistance()){
@@ -641,39 +681,40 @@ void BodyROSItem::update3DRangeSensor
 
 void BodyROSItem::input()
 {
-  
+
 }
 
 
 void BodyROSItem::output()
 {
-  
+
 }
 
 
 void BodyROSItem::stopPublishing()
 {
-    size_t i;
-    
-    for (i = 0; i < forceSensorPublishers.size(); i++) {
+    for (size_t i = 0; i < forceSensorPublishers.size(); ++i) {
         forceSensorPublishers[i].shutdown();
     }
-    for (i = 0; i < rateGyroSensorPublishers.size(); i++) {
+    for (size_t i = 0; i < rateGyroSensorPublishers.size(); ++i) {
         rateGyroSensorPublishers[i].shutdown();
     }
-    for (i = 0; i < accelSensorPublishers.size(); i++) {
+    for (size_t i = 0; i < accelSensorPublishers.size(); ++i) {
         accelSensorPublishers[i].shutdown();
     }
-    for (i = 0; i < visionSensorPublishers.size(); i++) {
+    for (size_t i = 0; i < imuPublishers.size(); ++i) {
+        imuPublishers[i].shutdown();
+    }
+    for (size_t i = 0; i < visionSensorPublishers.size(); ++i) {
         visionSensorPublishers[i].shutdown();
     }
-    for (i = 0; i < rangeVisionSensorPublishers.size(); i++) {
+    for (size_t i = 0; i < rangeVisionSensorPublishers.size(); ++i) {
         rangeVisionSensorPublishers[i].shutdown();
     }
-    for (i = 0; i < rangeSensorPublishers.size(); i++) {
+    for (size_t i = 0; i < rangeSensorPublishers.size(); ++i) {
         rangeSensorPublishers[i].shutdown();
     }
-    for (i = 0; i < rangeSensorPcPublishers.size(); i++) {
+    for (size_t i = 0; i < rangeSensorPcPublishers.size(); ++i) {
         rangeSensorPcPublishers[i].shutdown();
     }
 }

@@ -116,17 +116,17 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
         if(link->actuationMode()){
             link->setActuationMode(link->actuationMode());
             switch(link->actuationMode()){
-            case Link::JOINT_ANGLE:
+            case Link::JointDisplacement:
                 controlTypes[i] = ControlType::POSITION;
                 jointHandle = hi::JointHandle(jointStateInterface.getHandle(jointNames[i]), &command[i].position);
                 positionJointInterface.registerHandle(jointHandle);
                 break;
-            case Link::JOINT_VELOCITY:
+            case Link::JointVelocity:
                 controlTypes[i] = ControlType::VELOCITY;
                 jointHandle = hi::JointHandle(jointStateInterface.getHandle(jointNames[i]), &command[i].velocity);
                 velocityJointInterface.registerHandle(jointHandle);
                 break;
-            case Link::JOINT_EFFORT:
+            case Link::JointEffort:
                 controlTypes[i] = ControlType::EFFORT;
                 jointHandle = hi::JointHandle(jointStateInterface.getHandle(jointNames[i]), &command[i].effort);
                 effortJointInterface.registerHandle(jointHandle);
@@ -140,19 +140,19 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
                 controlTypes[i] = ControlType::POSITION;
                 jointHandle = hi::JointHandle(jointStateInterface.getHandle(jointNames[i]), &command[i].position);
                 positionJointInterface.registerHandle(jointHandle);
-                link->setActuationMode(Link::JOINT_ANGLE);
+                link->setActuationMode(Link::JointDisplacement);
                 break;
             case ControlType::VELOCITY:
                 controlTypes[i] = ControlType::VELOCITY;
                 jointHandle = hi::JointHandle(jointStateInterface.getHandle(jointNames[i]), &command[i].velocity);
                 velocityJointInterface.registerHandle(jointHandle);
-                link->setActuationMode(Link::JOINT_VELOCITY);
+                link->setActuationMode(Link::JointVelocity);
                 break;
             case ControlType::EFFORT:
                 controlTypes[i] = ControlType::EFFORT;
                 jointHandle = hi::JointHandle(jointStateInterface.getHandle(jointNames[i]), &command[i].effort);
                 effortJointInterface.registerHandle(jointHandle);
-                link->setActuationMode(Link::JOINT_EFFORT);
+                link->setActuationMode(Link::JointEffort);
                 break;
             default:
                 break;

@@ -13,6 +13,7 @@ choreonoid_add_plugin(${target}
   )
 
 target_link_libraries(${target}
+  PUBLIC
   ${roscpp_LIBRARIES}
   ${std_msgs_LIBRARIES}
   ${sensor_msgs_LIBRARIES}

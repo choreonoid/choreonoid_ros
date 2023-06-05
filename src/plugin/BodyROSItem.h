@@ -75,6 +75,7 @@ private:
     DeviceList<Imu> imus_;
     DeviceList<Camera> visionSensors_;
     DeviceList<RangeCamera> rangeVisionSensors_;
+    DeviceList<RangeCamera> rangeVisionSensors_depthimage_;
     DeviceList<RangeSensor> rangeSensors_;
     double timeStep_;
 
@@ -97,8 +98,9 @@ private:
     std::vector<ros::Publisher> rateGyroSensorPublishers;
     std::vector<ros::Publisher> accelSensorPublishers;
     std::vector<ros::Publisher> imuPublishers;
-    std::vector<image_transport::Publisher> visionSensorPublishers;
-    std::vector<ros::Publisher> rangeVisionSensorPublishers;
+    std::vector<image_transport::CameraPublisher> visionSensorPublishers;
+    std::vector<ros::Publisher> rangeVisionSensorPublishers_pointcloud;
+    std::vector<image_transport::CameraPublisher> rangeVisionSensorPublishers_depthimage;
     std::vector<ros::Publisher> rangeSensorPublishers;
     std::vector<ros::Publisher> rangeSensorPcPublishers;
 
@@ -119,9 +121,11 @@ private:
         const AccelerationSensorPtr& sensor, const ros::Publisher& publisher);
     void updateImu(const ImuPtr& sensor, const ros::Publisher& publisher);
     void updateVisionSensor(
-        const CameraPtr& sensor, const image_transport::Publisher& publisher);
+        const CameraPtr& sensor, const image_transport::CameraPublisher& publisher);
     void updateRangeVisionSensor(
         const RangeCameraPtr& sensor, const ros::Publisher& publisher);
+    void updateRangeVisionSensor_depthimage(
+        const RangeCameraPtr& sensor, const image_transport::CameraPublisher& publisher);
     void updateRangeSensor(
         const RangeSensorPtr& sensor, const ros::Publisher& publisher);
     void update3DRangeSensor(

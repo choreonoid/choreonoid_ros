@@ -369,6 +369,9 @@ void BodyROSItem::updateForceSensor
     if(!sensor->on()){
         return;
     }
+    if(publisher.getNumSubscribers()==0){
+        return;
+    }
     geometry_msgs::WrenchStamped force;
     force.header.stamp.fromSec(io->currentTime());
     force.header.frame_id = sensor->name();
@@ -388,6 +391,9 @@ void BodyROSItem::updateRateGyroSensor
     if(!sensor->on()){
         return;
     }
+    if(publisher.getNumSubscribers()==0){
+        return;
+    }
     sensor_msgs::Imu gyro;
     gyro.header.stamp.fromSec(io->currentTime());
     gyro.header.frame_id = sensor->name();
@@ -404,6 +410,9 @@ void BodyROSItem::updateAccelSensor
     if(!sensor->on()){
         return;
     }
+    if(publisher.getNumSubscribers()==0){
+        return;
+    }
     sensor_msgs::Imu accel;
     accel.header.stamp.fromSec(io->currentTime());
     accel.header.frame_id = sensor->name();
@@ -418,6 +427,9 @@ void BodyROSItem::updateImu
 (const ImuPtr& sensor, const ros::Publisher& publisher)
 {
     if(!sensor->on()){
+        return;
+    }
+    if(publisher.getNumSubscribers()==0){
         return;
     }
     sensor_msgs::Imu imu;
@@ -437,6 +449,9 @@ void BodyROSItem::updateVisionSensor
 (const CameraPtr& sensor, const image_transport::Publisher& publisher)
 {
     if(!sensor->on()){
+        return;
+    }
+    if(publisher.getNumSubscribers()==0){
         return;
     }
     sensor_msgs::Image vision;
@@ -463,6 +478,9 @@ void BodyROSItem::updateRangeVisionSensor
 (const RangeCameraPtr& sensor, const ros::Publisher& publisher)
 {
     if(!sensor->on()){
+        return;
+    }
+    if(publisher.getNumSubscribers()==0){
         return;
     }
     sensor_msgs::PointCloud2 range;
@@ -539,6 +557,9 @@ void BodyROSItem::updateRangeSensor
     if(!sensor->on()){
         return;
     }
+    if(publisher.getNumSubscribers()==0){
+        return;
+    }
     sensor_msgs::LaserScan range;
     range.header.stamp.fromSec(io->currentTime());
     range.header.frame_id = sensor->name();
@@ -569,6 +590,9 @@ void BodyROSItem::update3DRangeSensor
 (const RangeSensorPtr& sensor, const ros::Publisher& publisher)
 {
     if(!sensor->on()){
+        return;
+    }
+    if(publisher.getNumSubscribers()==0){
         return;
     }
     sensor_msgs::PointCloud2 range;
@@ -643,6 +667,9 @@ void BodyROSItem::update3DRangeSensor
 (const RangeSensorPtr& sensor, const ros::Publisher& publisher)
 {
     if(!sensor->on()){
+        return;
+    }
+    if(publisher.getNumSubscribers()==0){
         return;
     }
     sensor_msgs::PointCloud range;

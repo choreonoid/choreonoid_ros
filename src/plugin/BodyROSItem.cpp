@@ -247,8 +247,8 @@ void BodyROSItem::createSensors(BodyPtr body)
     for (CameraPtr sensor : visionSensors_) {
         std::string name = sensor->name();
         std::replace(name.begin(), name.end(), '-', '_');
-        const image_transport::Publisher publisher
-            = it.advertise(name + "/image_raw", 1);
+        const image_transport::CameraPublisher publisher
+            = it.advertiseCamera(name + "/image_raw", 1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateVisionSensor(sensor, publisher);
         });
@@ -434,7 +434,7 @@ void BodyROSItem::updateImu
 
 
 void BodyROSItem::updateVisionSensor
-(const CameraPtr& sensor, const image_transport::Publisher& publisher)
+(const CameraPtr& sensor, const image_transport::CameraPublisher& publisher)
 {
     if(!sensor->on()){
         return;
@@ -455,7 +455,61 @@ void BodyROSItem::updateVisionSensor
     vision.step = sensor->image().width() * sensor->image().numComponents();
     vision.data.resize(vision.step * vision.height);
     std::memcpy(&(vision.data[0]), &(sensor->image().pixels()[0]), vision.step * vision.height);
-    publisher.publish(vision);
+
+    sensor_msgs::CameraInfo info;
+    info.header.stamp = vision.header.stamp;
+    info.header.frame_id  = vision.header.frame_id ;
+    info.width = vision.width;
+    info.height = vision.height;
+    info.distortion_model = "plumb_bob";
+    info.D.resize(5);
+    for (int i = 0; i < 5; ++i) {
+        info.D[i] = 0;
+    }
+
+    double fovy2 = sensor->fieldOfView() / 2.0;
+    double width  = sensor->resolutionX();
+    double height = sensor->resolutionY();
+    double minLength = std::min(width, height);
+    double f = minLength / tan(fovy2) / 2.0;
+    double fx = f;
+    double fy = f;
+    double cx = (width - 1.0)/2.0;
+    double cy = (height - 1.0)/2.0;
+
+    info.K[0] = fx;
+    info.K[1] = 0.0;
+    info.K[2] = cx;
+    info.K[3] = 0.0;
+    info.K[4] = fy;
+    info.K[5] = cy;
+    info.K[6] = 0.0;
+    info.K[7] = 0.0;
+    info.K[8] = 1.0;
+
+    info.P[0] = fx;
+    info.P[1] = 0.0;
+    info.P[2] = cx;
+    info.P[3] = 0.0;
+    info.P[4] = 0.0;
+    info.P[5] = fy;
+    info.P[6] = cy;
+    info.P[7] = 0.0;
+    info.P[8] = 0.0;
+    info.P[9] = 0.0;
+    info.P[10] = 1.0;
+    info.P[11] = 0.0;
+    
+    
+    for (int i = 0; i < 9; ++i) {
+        info.R[i] = 0.0;
+    }
+
+    info.R[0] = 1.0;
+    info.R[4] = 1.0;
+    info.R[8] = 1.0;
+    
+    publisher.publish(vision, info);
 }
 
 

@@ -369,7 +369,7 @@ void BodyROSItem::updateForceSensor
     if(!sensor->on()){
         return;
     }
-    if(publisher.getNumSubscribers()==0){
+    if(publisher.getNumSubscribers() == 0){
         return;
     }
     geometry_msgs::WrenchStamped force;
@@ -391,7 +391,7 @@ void BodyROSItem::updateRateGyroSensor
     if(!sensor->on()){
         return;
     }
-    if(publisher.getNumSubscribers()==0){
+    if(publisher.getNumSubscribers() == 0){
         return;
     }
     sensor_msgs::Imu gyro;
@@ -410,7 +410,7 @@ void BodyROSItem::updateAccelSensor
     if(!sensor->on()){
         return;
     }
-    if(publisher.getNumSubscribers()==0){
+    if(publisher.getNumSubscribers() == 0){
         return;
     }
     sensor_msgs::Imu accel;
@@ -429,7 +429,7 @@ void BodyROSItem::updateImu
     if(!sensor->on()){
         return;
     }
-    if(publisher.getNumSubscribers()==0){
+    if(publisher.getNumSubscribers() == 0){
         return;
     }
     sensor_msgs::Imu imu;
@@ -451,7 +451,7 @@ void BodyROSItem::updateVisionSensor
     if(!sensor->on()){
         return;
     }
-    if(publisher.getNumSubscribers()==0){
+    if(publisher.getNumSubscribers() == 0){
         return;
     }
     sensor_msgs::Image vision;
@@ -480,7 +480,7 @@ void BodyROSItem::updateRangeVisionSensor
     if(!sensor->on()){
         return;
     }
-    if(publisher.getNumSubscribers()==0){
+    if(publisher.getNumSubscribers() == 0){
         return;
     }
     sensor_msgs::PointCloud2 range;
@@ -557,7 +557,7 @@ void BodyROSItem::updateRangeSensor
     if(!sensor->on()){
         return;
     }
-    if(publisher.getNumSubscribers()==0){
+    if(publisher.getNumSubscribers() == 0){
         return;
     }
     sensor_msgs::LaserScan range;
@@ -592,7 +592,7 @@ void BodyROSItem::update3DRangeSensor
     if(!sensor->on()){
         return;
     }
-    if(publisher.getNumSubscribers()==0){
+    if(publisher.getNumSubscribers() == 0){
         return;
     }
     sensor_msgs::PointCloud2 range;
@@ -669,7 +669,7 @@ void BodyROSItem::update3DRangeSensor
     if(!sensor->on()){
         return;
     }
-    if(publisher.getNumSubscribers()==0){
+    if(publisher.getNumSubscribers() == 0){
         return;
     }
     sensor_msgs::PointCloud range;

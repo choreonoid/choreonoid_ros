@@ -461,10 +461,7 @@ void BodyROSItem::updateVisionSensor
     info.width = vision.width;
     info.height = vision.height;
     info.distortion_model = "plumb_bob";
-    info.D.resize(5);
-    for (int i = 0; i < 5; ++i) {
-        info.D[i] = 0;
-    }
+    info.D.resize(5, 0.0);
 
     double fovy2 = sensor->fieldOfView() / 2.0;
     double width  = sensor->resolutionX();

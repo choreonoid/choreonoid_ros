@@ -482,11 +482,7 @@ void BodyROSItem::updateVisionSensor
     info.P[6] = principalPointY;
     info.P[10] = 1.0;
     
-    
-    for (int i = 0; i < 9; ++i) {
-        info.R[i] = 0.0;
-    }
-
+    info.R.assign(0.0);
     info.R[0] = 1.0;
     info.R[4] = 1.0;
     info.R[8] = 1.0;

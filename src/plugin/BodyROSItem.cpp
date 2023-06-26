@@ -463,38 +463,24 @@ void BodyROSItem::updateVisionSensor
     info.distortion_model = "plumb_bob";
     info.D.resize(5, 0.0);
 
-    double fovy2 = sensor->fieldOfView() / 2.0;
-    double width  = sensor->resolutionX();
-    double height = sensor->resolutionY();
-    double minLength = std::min(width, height);
-    double f = minLength / tan(fovy2) / 2.0;
-    double fx = f;
-    double fy = f;
-    double cx = (width - 1.0)/2.0;
-    double cy = (height - 1.0)/2.0;
+    const double fov2 = sensor->fieldOfView() / 2.0;
+    const double minLength = std::min(info.width, info.height);
+    const double focalLength = minLength / 2.0 / tan(fov2);
+    const double principalPointX = (info.width - 1.0) / 2.0;
+    const double principalPointY = (info.height - 1.0) / 2.0;
 
-    info.K[0] = fx;
-    info.K[1] = 0.0;
-    info.K[2] = cx;
-    info.K[3] = 0.0;
-    info.K[4] = fy;
-    info.K[5] = cy;
-    info.K[6] = 0.0;
-    info.K[7] = 0.0;
-    info.K[8] = 1.0;
+    info.K.assign(0.0);
+    info.K[0] = focalLength;
+    info.K[2] = principalPointX;
+    info.K[4] = focalLength;
+    info.K[5] = principalPointY;
 
-    info.P[0] = fx;
-    info.P[1] = 0.0;
-    info.P[2] = cx;
-    info.P[3] = 0.0;
-    info.P[4] = 0.0;
-    info.P[5] = fy;
-    info.P[6] = cy;
-    info.P[7] = 0.0;
-    info.P[8] = 0.0;
-    info.P[9] = 0.0;
+    info.P.assign(0.0);
+    info.P[0] = focalLength;
+    info.P[2] = principalPointX;
+    info.P[5] = focalLength;
+    info.P[6] = principalPointY;
     info.P[10] = 1.0;
-    info.P[11] = 0.0;
     
     
     for (int i = 0; i < 9; ++i) {

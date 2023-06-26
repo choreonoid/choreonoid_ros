@@ -457,8 +457,7 @@ void BodyROSItem::updateVisionSensor
     std::memcpy(&(vision.data[0]), &(sensor->image().pixels()[0]), vision.step * vision.height);
 
     sensor_msgs::CameraInfo info;
-    info.header.stamp = vision.header.stamp;
-    info.header.frame_id  = vision.header.frame_id ;
+    info.header = vision.header;
     info.width = vision.width;
     info.height = vision.height;
     info.distortion_model = "plumb_bob";

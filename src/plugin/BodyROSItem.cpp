@@ -118,7 +118,7 @@ bool BodyROSItem::start()
     for (size_t i = 0; i < body()->numAllJoints(); i++) {
         Link* joint = body()->joint(i);
 
-        joint_state_.name[i]     = joint->name();
+        joint_state_.name[i]     = joint->jointName();
         joint_state_.position[i] = joint->q();
         joint_state_.velocity[i] = joint->dq();
         joint_state_.effort[i]   = joint->u();

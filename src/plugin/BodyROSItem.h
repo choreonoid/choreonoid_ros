@@ -97,7 +97,7 @@ private:
     std::vector<ros::Publisher> rateGyroSensorPublishers;
     std::vector<ros::Publisher> accelSensorPublishers;
     std::vector<ros::Publisher> imuPublishers;
-    std::vector<image_transport::Publisher> visionSensorPublishers;
+    std::vector<image_transport::CameraPublisher> visionSensorPublishers;
     std::vector<ros::Publisher> rangeVisionSensorPublishers;
     std::vector<ros::Publisher> rangeSensorPublishers;
     std::vector<ros::Publisher> rangeSensorPcPublishers;
@@ -119,7 +119,7 @@ private:
         const AccelerationSensorPtr& sensor, const ros::Publisher& publisher);
     void updateImu(const ImuPtr& sensor, const ros::Publisher& publisher);
     void updateVisionSensor(
-        const CameraPtr& sensor, const image_transport::Publisher& publisher);
+        const CameraPtr& sensor, const image_transport::CameraPublisher& publisher);
     void updateRangeVisionSensor(
         const RangeCameraPtr& sensor, const ros::Publisher& publisher);
     void updateRangeSensor(

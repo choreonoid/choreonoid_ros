@@ -247,8 +247,8 @@ void BodyROSItem::createSensors(BodyPtr body)
     for (CameraPtr sensor : visionSensors_) {
         std::string name = sensor->name();
         std::replace(name.begin(), name.end(), '-', '_');
-        const image_transport::Publisher publisher
-            = it.advertise(name + "/image_raw", 1);
+        const image_transport::CameraPublisher publisher
+            = it.advertiseCamera(name + "/image_raw", 1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateVisionSensor(sensor, publisher);
         });
@@ -446,7 +446,7 @@ void BodyROSItem::updateImu
 
 
 void BodyROSItem::updateVisionSensor
-(const CameraPtr& sensor, const image_transport::Publisher& publisher)
+(const CameraPtr& sensor, const image_transport::CameraPublisher& publisher)
 {
     if(!sensor->on()){
         return;
@@ -470,7 +470,39 @@ void BodyROSItem::updateVisionSensor
     vision.step = sensor->image().width() * sensor->image().numComponents();
     vision.data.resize(vision.step * vision.height);
     std::memcpy(&(vision.data[0]), &(sensor->image().pixels()[0]), vision.step * vision.height);
-    publisher.publish(vision);
+
+    sensor_msgs::CameraInfo info;
+    info.header = vision.header;
+    info.width = vision.width;
+    info.height = vision.height;
+    info.distortion_model = "plumb_bob";
+    info.D.resize(5, 0.0);
+
+    const double fov2 = sensor->fieldOfView() / 2.0;
+    const double minLength = std::min(info.width, info.height);
+    const double focalLength = minLength / 2.0 / tan(fov2);
+    const double principalPointX = (info.width - 1.0) / 2.0;
+    const double principalPointY = (info.height - 1.0) / 2.0;
+
+    info.K.assign(0.0);
+    info.K[0] = focalLength;
+    info.K[2] = principalPointX;
+    info.K[4] = focalLength;
+    info.K[5] = principalPointY;
+
+    info.P.assign(0.0);
+    info.P[0] = focalLength;
+    info.P[2] = principalPointX;
+    info.P[5] = focalLength;
+    info.P[6] = principalPointY;
+    info.P[10] = 1.0;
+    
+    info.R.assign(0.0);
+    info.R[0] = 1.0;
+    info.R[4] = 1.0;
+    info.R[8] = 1.0;
+    
+    publisher.publish(vision, info);
 }
 
 

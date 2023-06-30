@@ -5,6 +5,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/PutPropertyFunction>
 #include <ros/console.h>
+#include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>

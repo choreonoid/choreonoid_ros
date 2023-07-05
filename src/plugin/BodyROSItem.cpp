@@ -41,6 +41,7 @@ BodyROSItem::BodyROSItem()
     : os(MessageView::instance()->cout())
 {
     io = nullptr;
+    jointStatePublication = true;
     jointStateUpdateRate = 100.0;
 }
 
@@ -50,6 +51,7 @@ BodyROSItem::BodyROSItem(const BodyROSItem& org)
     , os(MessageView::instance()->cout())
 {
     io = nullptr;
+    jointStatePublication = true;
     jointStateUpdateRate = 100.0;
 }
 
@@ -69,6 +71,7 @@ Item* BodyROSItem::doDuplicate() const
 bool BodyROSItem::store(Archive& archive)
 {
     archive.write("body_ros_version", 0);
+    archive.write("joint_state_publication", jointStatePublication);
     archive.write("joint_state_update_rate", jointStateUpdateRate);
 
     return true;
@@ -77,14 +80,17 @@ bool BodyROSItem::store(Archive& archive)
 
 bool BodyROSItem::restore(const Archive& archive)
 {
+    archive.read({ "joint_state_publication", "jointStatePublication" }, jointStatePublication);
     archive.read({ "joint_state_update_rate", "jointStateUpdateRate" }, jointStateUpdateRate);
+
     return true;
 }
 
 
 void BodyROSItem::doPutProperties(PutPropertyFunction& putProperty)
 {
-    putProperty.decimals(2).min(0.0)("Update rate", jointStateUpdateRate, changeProperty(jointStateUpdateRate));
+    putProperty("JointState Publication", jointStatePublication, changeProperty(jointStatePublication));
+    putProperty.decimals(2).min(0.0)("JointState Update rate", jointStateUpdateRate, changeProperty(jointStateUpdateRate));
 }
 
 
@@ -130,8 +136,15 @@ bool BodyROSItem::start()
     rosNode.reset(new ros::NodeHandle(name));
     createSensors(simulationBody);
 
+    if (!jointStatePublication) {
+        return true;
+    }
     jointStatePublisher     = rosNode->advertise<sensor_msgs::JointState>("joint_states", 1000);
-    jointStateUpdatePeriod = 1.0 / jointStateUpdateRate;
+    if (jointStateUpdateRate == 0.0) {
+        jointStateUpdatePeriod = 0.0;
+    } else {
+        jointStateUpdatePeriod = 1.0 / jointStateUpdateRate;
+    }
     jointStateLastUpdate   = io->currentTime();
     ROS_DEBUG("Joint state update rate %f", jointStateUpdateRate);
 
@@ -344,7 +357,7 @@ bool BodyROSItem::control()
     controlTime_ = io->currentTime();
     double updateSince = controlTime_ - jointStateLastUpdate;
 
-    if (updateSince > jointStateUpdatePeriod) {
+    if (jointStatePublication && (updateSince > jointStateUpdatePeriod)) {
         // publish current joint states
         joint_state_.header.stamp.fromSec(controlTime_);
 

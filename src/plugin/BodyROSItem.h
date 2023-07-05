@@ -78,10 +78,13 @@ private:
     DeviceList<RangeSensor> rangeSensors_;
     double timeStep_;
 
+    /* properties */
+    bool jointStatePublication;
+    double jointStateUpdateRate;
+
     /* joint states */
     sensor_msgs::JointState joint_state_;
     ros::Publisher jointStatePublisher;
-    double jointStateUpdateRate;
     double jointStateUpdatePeriod;
     double jointStateLastUpdate;
 

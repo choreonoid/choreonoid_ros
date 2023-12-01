@@ -8,20 +8,23 @@ choreonoid_add_plugin(${target}
         BodyROS2Item.cpp
         deprecated/BodyPublisherItem.cpp
         ${mofiles}
-  )
+)
 
-target_link_libraries(${target}
-  ${rclcpp_LIBRARIES}
-  ${std_msgs_LIBRARIES}
-  ${std_srvs_LIBRARIES}
-  ${sensor_msgs_LIBRARIES}
-  ${image_transport_LIBRARIES}
-  Choreonoid::CnoidBodyPlugin
-  )
+ament_target_dependencies(${target} PUBLIC
+        "rclcpp"
+        "std_msgs"
+        "std_srvs"
+        "sensor_msgs"
+        "image_transport"
+)
 
-if(CHOREONOID_ENABLE_PYTHON)
-#  add_subdirectory(pybind11)
-endif()
+target_link_libraries(${target} PUBLIC
+        Choreonoid::CnoidBodyPlugin
+)
+
+if (CHOREONOID_ENABLE_PYTHON)
+    #  add_subdirectory(pybind11)
+endif ()
 
 install(TARGETS ${target}
-        RUNTIME DESTINATION lib/${PROJECT_NAME})
+        LIBRARY DESTINATION lib/${PROJECT_NAME})

@@ -7,22 +7,24 @@ on:
 jobs:
   build:
     name: build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 120
     strategy:
       fail-fast: false
     env:
-      ROS_DISTRO: foxy
+      ROS_DISTRO: humble
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
+      image: osrf/ros:humble-desktop-jammy
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Install dependencies of choreonoid
         run: |
+          apt-get update && \
+          apt-get -y upgrade && \
           apt-get -y install \
           build-essential \
           cmake-curses-gui \
@@ -30,7 +32,6 @@ jobs:
           libboost-system-dev \
           libboost-program-options-dev \
           libboost-iostreams-dev \
-          libboost-filesystem-dev \
           libeigen3-dev \
           uuid-dev \
           libxfixes-dev \
@@ -40,7 +41,8 @@ jobs:
           zlib1g-dev \
           libjpeg-dev \
           libpng-dev \
-          qt5-default \
+          libfreetype-dev \
+          qtbase5-dev \
           libqt5x11extras5-dev \
           libqt5svg5-dev \
           qttranslations5-l10n \
@@ -52,24 +54,16 @@ jobs:
           libpulse-dev \
           libsndfile1-dev \
           libgstreamer1.0-dev \
-          libgstreamer-plugins-base1.0-dev
+          libgstreamer-plugins-base1.0-dev \
+          libzip-dev \
+          python3-colcon-coveragepy-result \
+          python3-colcon-lcov-result
 
       - name: Run build test
-        uses: ros-tooling/action-ros-ci@v0.2
+        uses: ros-tooling/action-ros-ci@v0.3
         with:
-          package-name: ${{ steps.list_packages.outputs.package_list }}
-          target-ros2-distro: foxy
+          target-ros2-distro: humble
           vcs-repo-file-url: dependency.repos
           extra-cmake-args: -DWITH_INTEGRATION_TEST=ON
-          colcon-defaults: |
-            {
-              "build": {
-                "mixin": ["coverage-gcc", "coverage-pytest"]
-              },
-              "test": {
-                "mixin": ["coverage-pytest"]
-              }
-            }
           # If possible, pin the repository in the workflow to a specific commit to avoid
           # changes in colcon-mixin-repository from breaking your tests.
-          colcon-mixin-repository: https://raw.githubusercontent.com/colcon/colcon-mixin-repository/1ddb69bedfd1f04c2f000e95452f7c24a4d6176b/index.yaml

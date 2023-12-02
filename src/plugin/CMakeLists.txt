@@ -2,8 +2,6 @@ set(target CnoidROSPlugin)
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 
-set(sources "")
-set(dependencies "")
 if(DEFINED ENV{ROS_VERSION})
     if($ENV{ROS_VERSION} EQUAL 1)
         choreonoid_add_plugin(${target}

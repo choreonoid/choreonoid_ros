@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
     <name>choreonoid_ros</name>
     <version>1.7.0</version>
     <description>The package for using Choreonoid as a ROS node</description>
@@ -10,25 +10,29 @@
     <url type="website">http://choreonoid.org</url>
     <url type="repository">https://github.com/choreonoid/choreonoid_ros.git</url>
 
-    <buildtool_depend>catkin</buildtool_depend>
-    <buildtool_depend>ament_cmake</buildtool_depend>
-    <depend>choreonoid</depend>
-    <depend>roscpp</depend>
-    <depend>rclcpp</depend>
+    <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+    <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
+    <depend>choreonoid_vendor</depend>
+
+    <depend condition="$ROS_VERSION == 1">roscpp</depend>
+    <depend condition="$ROS_VERSION == 2">rclcpp</depend>
+
     <depend>std_msgs</depend>
     <depend>std_srvs</depend>
     <depend>sensor_msgs</depend>
     <depend>image_transport</depend>
-    <depend>pluginlib</depend>
-    <depend>angles</depend>
-    <depend>controller_manager</depend>
-    <depend>hardware_interface</depend>
-    <depend>joint_limits_interface</depend>
-    <depend>transmission_interface</depend>
-    <depend>urdf</depend>
+
+    <depend condition="$ROS_VERSION == 1">pluginlib</depend>
+    <depend condition="$ROS_VERSION == 1">angles</depend>
+    <depend condition="$ROS_VERSION == 1">controller_manager</depend>
+    <depend condition="$ROS_VERSION == 1">hardware_interface</depend>
+    <depend condition="$ROS_VERSION == 1">joint_limits_interface</depend>
+    <depend condition="$ROS_VERSION == 1">transmission_interface</depend>
+    <depend condition="$ROS_VERSION == 1">urdf</depend>
 
     <export>
-        <build_type>cmake</build_type>
+        <build_type condition="$ROS_VERSION == 1">cmake</build_type>
+        <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
         <choreonoid_ros plugin="${prefix}/plugins.xml" />
     </export>
 </package>

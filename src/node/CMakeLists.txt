@@ -12,7 +12,7 @@ if(DEFINED ENV{ROS_VERSION})
         set_target_properties(${target} PROPERTIES OUTPUT_NAME choreonoid)
         target_link_libraries(${target} Choreonoid::CnoidBase)
         install(TARGETS ${target}
-                RUNTIME DESTINATION bin/${PROJECT_NAME})
+                RUNTIME DESTINATION lib/${PROJECT_NAME})
     endif ()
 endif ()
 

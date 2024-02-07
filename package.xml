@@ -12,7 +12,7 @@
 
     <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
     <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
-    <depend>choreonoid_vendor</depend>
+    <depend>choreonoid</depend>
 
     <depend condition="$ROS_VERSION == 1">roscpp</depend>
     <depend condition="$ROS_VERSION == 2">rclcpp</depend>

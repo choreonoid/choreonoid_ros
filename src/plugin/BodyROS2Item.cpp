@@ -114,9 +114,9 @@ bool BodyROS2Item::start()
     rosContext->init(0, nullptr);
     std::string name = simulationBody->name();
     std::replace(name.begin(), name.end(), '-', '_');
-    node_ = std::make_unique<rclcpp::Node>(name, rclcpp::NodeOptions().context(rosContext));
+    rosNode = std::make_unique<rclcpp::Node>(name, rclcpp::NodeOptions().context(rosContext));
 
-    image_transport = std::make_shared<image_transport::ImageTransport>(node_);
+    image_transport = std::make_shared<image_transport::ImageTransport>(rosNode);
     // buffer of preserve currently state of joints.
     joint_state_.header.stamp = getStampMsgFromSec(controlTime_);
     joint_state_.name.resize(body()->numAllJoints());
@@ -137,11 +137,11 @@ bool BodyROS2Item::start()
     createSensors(simulationBody);
 
     jointStatePublisher
-        = node_->create_publisher<sensor_msgs::msg::JointState>("joint_states",
+        = rosNode->create_publisher<sensor_msgs::msg::JointState>("joint_states",
                                                                 1000);
     jointStateUpdatePeriod = 1.0 / jointStateUpdateRate;
     jointStateLastUpdate = io->currentTime();
-    RCLCPP_DEBUG(node_->get_logger(),
+    RCLCPP_DEBUG(rosNode->get_logger(),
                  "Joint state update rate %f",
                  jointStateUpdateRate);
 
@@ -174,7 +174,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     }
 
     auto getROS2Name = [this](const std::string &name) {
-        std::string ros_name = std::string(node_->get_fully_qualified_name()) + "/" + name;
+        std::string ros_name = std::string(rosNode->get_fully_qualified_name()) + "/" + name;
         std::replace(ros_name.begin(), ros_name.end(), '-', '_');
         return ros_name;
     };
@@ -186,7 +186,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     for (auto sensor : forceSensors_) {
         std::string name = getROS2Name(sensor->name());
         auto publisher
-            = node_->create_publisher<geometry_msgs::msg::WrenchStamped>(name,
+            = rosNode->create_publisher<geometry_msgs::msg::WrenchStamped>(name,
                                                                          1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateForceSensor(sensor, publisher);
@@ -198,9 +198,9 @@ void BodyROS2Item::createSensors(BodyPtr body)
                                                     _2,
                                                     sensor);
         forceSensorSwitchServers.push_back(
-            node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
+            rosNode->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
                                                           requestCallback));
-        RCLCPP_INFO(node_->get_logger(),
+        RCLCPP_INFO(rosNode->get_logger(),
                     "Create force sensor %s",
                     sensor->name().c_str());
     }
@@ -211,7 +211,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     rateGyroSensorSwitchServers.reserve(gyroSensors_.size());
     for (auto sensor : gyroSensors_) {
         std::string name = getROS2Name(sensor->name());
-        auto publisher = node_->create_publisher<sensor_msgs::msg::Imu>(name, 1);
+        auto publisher = rosNode->create_publisher<sensor_msgs::msg::Imu>(name, 1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateRateGyroSensor(sensor, publisher);
         });
@@ -222,9 +222,9 @@ void BodyROS2Item::createSensors(BodyPtr body)
                                                     _2,
                                                     sensor);
         rateGyroSensorSwitchServers.push_back(
-            node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
+            rosNode->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
                                                           requestCallback));
-        RCLCPP_INFO(node_->get_logger(),
+        RCLCPP_INFO(rosNode->get_logger(),
                     "Create gyro sensor %s",
                     sensor->name().c_str());
     }
@@ -235,7 +235,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     accelSensorSwitchServers.reserve(accelSensors_.size());
     for (auto sensor : accelSensors_) {
         std::string name = getROS2Name(sensor->name());
-        auto publisher = node_->create_publisher<sensor_msgs::msg::Imu>(name, 1);
+        auto publisher = rosNode->create_publisher<sensor_msgs::msg::Imu>(name, 1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateAccelSensor(sensor, publisher);
         });
@@ -246,9 +246,9 @@ void BodyROS2Item::createSensors(BodyPtr body)
                                                     _2,
                                                     sensor);
         accelSensorSwitchServers.push_back(
-            node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
+            rosNode->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
                                                           requestCallback));
-        RCLCPP_INFO(node_->get_logger(),
+        RCLCPP_INFO(rosNode->get_logger(),
                     "Create accel sensor %s",
                     sensor->name().c_str());
     }
@@ -270,9 +270,9 @@ void BodyROS2Item::createSensors(BodyPtr body)
                                                     _2,
                                                     sensor);
         visionSensorSwitchServers.push_back(
-            node_->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
+            rosNode->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
                                                           requestCallback));
-        RCLCPP_INFO(node_->get_logger(),
+        RCLCPP_INFO(rosNode->get_logger(),
                     "Create RGB camera %s (%f Hz)",
                     sensor->name().c_str(),
                     sensor->frameRate());
@@ -284,7 +284,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     rangeVisionSensorSwitchServers.reserve(rangeVisionSensors_.size());
     for (auto sensor : rangeVisionSensors_) {
         std::string name = getROS2Name(sensor->name());
-        auto publisher = node_->create_publisher<sensor_msgs::msg::PointCloud2>(
+        auto publisher = rosNode->create_publisher<sensor_msgs::msg::PointCloud2>(
             name + "/point_cloud", 1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateRangeVisionSensor(sensor, publisher);
@@ -297,14 +297,14 @@ void BodyROS2Item::createSensors(BodyPtr body)
             SetBoolCallback requestCallback
                 = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             rangeVisionSensorSwitchServers.push_back(
-                node_->create_service<std_srvs::srv::SetBool>(
+                rosNode->create_service<std_srvs::srv::SetBool>(
                     name + "/set_enabled", requestCallback));
-            RCLCPP_INFO(node_->get_logger(),
+            RCLCPP_INFO(rosNode->get_logger(),
                         "Create depth camera %s (%f Hz)",
                         sensor->name().c_str(),
                         sensor->frameRate());
         } else {
-            RCLCPP_INFO(node_->get_logger(),
+            RCLCPP_INFO(rosNode->get_logger(),
                         "Create RGBD camera %s (%f Hz)",
                         sensor->name().c_str(),
                         sensor->frameRate());
@@ -322,7 +322,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     for (auto sensor : rangeSensors_) {
         if (sensor->numPitchSamples() > 1) {
             std::string name = getROS2Name(sensor->name());
-            auto pc_publisher = node_->create_publisher<
+            auto pc_publisher = rosNode->create_publisher<
                 sensor_msgs::msg::PointCloud>(name + "/point_cloud", 1);
             sensor->sigStateChanged().connect([this, sensor, pc_publisher]() {
                 update3DRangeSensor(sensor, pc_publisher);
@@ -331,15 +331,15 @@ void BodyROS2Item::createSensors(BodyPtr body)
             SetBoolCallback requestCallback
                 = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             rangeSensorPcSwitchServers.push_back(
-                node_->create_service<std_srvs::srv::SetBool>(
+                rosNode->create_service<std_srvs::srv::SetBool>(
                     name + "/set_enabled", requestCallback));
-            RCLCPP_DEBUG(node_->get_logger(),
+            RCLCPP_DEBUG(rosNode->get_logger(),
                          "Create 3d range sensor %s (%f Hz)",
                          sensor->name().c_str(),
                          sensor->scanRate());
         } else {
             std::string name = getROS2Name(sensor->name());
-            auto publisher = node_->create_publisher<
+            auto publisher = rosNode->create_publisher<
                 sensor_msgs::msg::LaserScan>(name + "/scan", 1);
             sensor->sigStateChanged().connect([this, sensor, publisher]() {
                 updateRangeSensor(sensor, publisher);
@@ -348,9 +348,9 @@ void BodyROS2Item::createSensors(BodyPtr body)
             SetBoolCallback requestCallback
                 = std::bind(&BodyROS2Item::switchDevice, this, _1, _2, sensor);
             rangeSensorSwitchServers.push_back(
-                node_->create_service<std_srvs::srv::SetBool>(
+                rosNode->create_service<std_srvs::srv::SetBool>(
                     name + "/set_enabled", requestCallback));
-            RCLCPP_DEBUG(node_->get_logger(),
+            RCLCPP_DEBUG(rosNode->get_logger(),
                          "Create 2d range sensor %s (%f Hz)",
                          sensor->name().c_str(),
                          sensor->scanRate());
@@ -384,9 +384,9 @@ bool BodyROS2Item::control()
         rclcpp::ExecutorOptions options;
         options.context = rosContext;
         rclcpp::executors::SingleThreadedExecutor executor(options);
-        executor.add_node(node_, false);
+        executor.add_node(rosNode, false);
         executor.spin_some();
-        executor.remove_node(node_, false);
+        executor.remove_node(rosNode, false);
     }
 
     return true;
@@ -465,7 +465,7 @@ void BodyROS2Item::updateVisionSensor(
     else if (sensor->image().numComponents() == 1)
         vision.encoding = "mono8";
     else {
-        RCLCPP_WARN(node_->get_logger(),
+        RCLCPP_WARN(rosNode->get_logger(),
                     "unsupported image component number: %i",
                     sensor->image().numComponents());
     }
@@ -646,8 +646,8 @@ void BodyROS2Item::stop()
         rclcpp::shutdown(rosContext);
         rosContext = nullptr;
     }
-    if (node_) {
-        node_ = nullptr;
+    if (rosNode) {
+        rosNode = nullptr;
     }
 }
 

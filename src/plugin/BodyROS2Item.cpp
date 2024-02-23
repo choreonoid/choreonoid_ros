@@ -38,9 +38,6 @@ void BodyROS2Item::initializeClass(ExtensionManager *ext)
 BodyROS2Item::BodyROS2Item()
     : os(MessageView::instance()->cout())
 {
-    node_ = std::make_shared<rclcpp::Node>("choreonoid_body_ros2",
-                                           rclcpp::NodeOptions());
-    image_transport = std::make_shared<image_transport::ImageTransport>(node_);
     io = nullptr;
     jointStateUpdateRate = 100.0;
 }
@@ -50,9 +47,6 @@ BodyROS2Item::BodyROS2Item(const BodyROS2Item &org)
     : ControllerItem(org)
     , os(MessageView::instance()->cout())
 {
-    node_ = std::make_shared<rclcpp::Node>("choreonoid_body_ros2",
-                                           rclcpp::NodeOptions());
-    image_transport = std::make_shared<image_transport::ImageTransport>(node_);
     io = nullptr;
     jointStateUpdateRate = 100.0;
 }
@@ -116,6 +110,13 @@ bool BodyROS2Item::initialize(ControllerIO *io)
 
 bool BodyROS2Item::start()
 {
+    rosContext = std::make_shared<rclcpp::Context>();
+    rosContext->init(0, nullptr);
+    std::string name = simulationBody->name();
+    std::replace(name.begin(), name.end(), '-', '_');
+    node_ = std::make_unique<rclcpp::Node>(name, rclcpp::NodeOptions().context(rosContext));
+
+    image_transport = std::make_shared<image_transport::ImageTransport>(node_);
     // buffer of preserve currently state of joints.
     joint_state_.header.stamp = getStampMsgFromSec(controlTime_);
     joint_state_.name.resize(body()->numAllJoints());
@@ -383,7 +384,16 @@ bool BodyROS2Item::control()
         jointStateLastUpdate += jointStateUpdatePeriod;
     }
 
-    rclcpp::spin_some(node_);
+    // spin some with custom context
+    {
+        rclcpp::ExecutorOptions options;
+        options.context = rosContext;
+        rclcpp::executors::SingleThreadedExecutor executor(options);
+        executor.add_node(node_, false);
+        executor.spin_some();
+        executor.remove_node(node_, false);
+    }
+
     return true;
 }
 
@@ -637,10 +647,13 @@ void BodyROS2Item::switchDevice(
 
 void BodyROS2Item::stop()
 {
-    if (rclcpp::ok()) {
-        rclcpp::shutdown();
+    if(rclcpp::ok(rosContext)) {
+        rclcpp::shutdown(rosContext);
+        rosContext = nullptr;
     }
-    return;
+    if (node_) {
+        node_ = nullptr;
+    }
 }
 
 builtin_interfaces::msg::Time BodyROS2Item::getStampMsgFromSec(double sec)

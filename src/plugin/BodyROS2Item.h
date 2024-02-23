@@ -106,6 +106,7 @@ private:
     double controlTime_;
     std::ostream &os;
 
+    rclcpp::Context::SharedPtr rosContext;
     rclcpp::Node::SharedPtr node_;
 
     std::string bodyName;

@@ -115,7 +115,6 @@ bool BodyROS2Item::start()
     std::string name = simulationBody->name();
     std::replace(name.begin(), name.end(), '-', '_');
     rosNode = std::make_unique<rclcpp::Node>(name, rclcpp::NodeOptions().context(rosContext));
-    std::cout << "BodyROS2Item::start(create node)" << std::endl;
 
     image_transport = std::make_shared<image_transport::ImageTransport>(rosNode);
     // buffer of preserve currently state of joints.

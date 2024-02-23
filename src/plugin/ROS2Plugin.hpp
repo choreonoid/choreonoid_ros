@@ -8,7 +8,7 @@
 #include <cnoid/Plugin>
 #include <rclcpp/rclcpp.hpp>
 
-class ROS2Plugin : public cnoid::Plugin, public rclcpp::Node
+class ROS2Plugin : public cnoid::Plugin
 {
 public:
     ROS2Plugin();

@@ -10,7 +10,6 @@ using namespace cnoid;
 
 ROS2Plugin::ROS2Plugin()
     : Plugin("ROS2")
-    , Node("choreonoid_ros2", rclcpp::NodeOptions())
 {
     require("Body");
 }

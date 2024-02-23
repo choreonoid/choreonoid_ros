@@ -31,7 +31,6 @@ int main(int argc, char** argv)
 
     int rosargc = rosargs.size();
     char** rosargv = &rosargs.front();
-    rclcpp::init(rosargc, rosargv);
 
     argc = args.size();
     argv = &args.front();
@@ -49,8 +48,6 @@ int main(int argc, char** argv)
     app.requirePluginToCustomizeApplication("ROS");
 
     int ret = app.exec();
-
-    rclcpp::shutdown();
 
     return ret;
 }

@@ -134,9 +134,6 @@ bool BodyROS2Item::start()
         joint_state_.effort[i] = joint->u();
     }
 
-    std::string name = simulationBody->name();
-    std::replace(name.begin(), name.end(), '-', '_');
-    // rosNode.reset(new ros::NodeHandle(name));
     createSensors(simulationBody);
 
     jointStatePublisher
@@ -176,13 +173,18 @@ void BodyROS2Item::createSensors(BodyPtr body)
         }
     }
 
+    auto getROS2Name = [this](const std::string &name) {
+        std::string ros_name = std::string(node_->get_fully_qualified_name()) + "/" + name;
+        std::replace(ros_name.begin(), ros_name.end(), '-', '_');
+        return ros_name;
+    };
+
     forceSensorPublishers.clear();
     forceSensorPublishers.reserve(forceSensors_.size());
     forceSensorSwitchServers.clear();
     forceSensorSwitchServers.reserve(forceSensors_.size());
     for (auto sensor : forceSensors_) {
-        std::string name = sensor->name();
-        std::replace(name.begin(), name.end(), '-', '_');
+        std::string name = getROS2Name(sensor->name());
         auto publisher
             = node_->create_publisher<geometry_msgs::msg::WrenchStamped>(name,
                                                                          1);
@@ -208,8 +210,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     rateGyroSensorSwitchServers.clear();
     rateGyroSensorSwitchServers.reserve(gyroSensors_.size());
     for (auto sensor : gyroSensors_) {
-        std::string name = sensor->name();
-        std::replace(name.begin(), name.end(), '-', '_');
+        std::string name = getROS2Name(sensor->name());
         auto publisher = node_->create_publisher<sensor_msgs::msg::Imu>(name, 1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateRateGyroSensor(sensor, publisher);
@@ -233,8 +234,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     accelSensorSwitchServers.clear();
     accelSensorSwitchServers.reserve(accelSensors_.size());
     for (auto sensor : accelSensors_) {
-        std::string name = sensor->name();
-        std::replace(name.begin(), name.end(), '-', '_');
+        std::string name = getROS2Name(sensor->name());
         auto publisher = node_->create_publisher<sensor_msgs::msg::Imu>(name, 1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateAccelSensor(sensor, publisher);
@@ -258,9 +258,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     visionSensorSwitchServers.clear();
     visionSensorSwitchServers.reserve(visionSensors_.size());
     for (CameraPtr sensor : visionSensors_) {
-        std::string name = sensor->name();
-        std::replace(name.begin(), name.end(), '-', '_');
-
+        std::string name = getROS2Name(sensor->name());
         visionSensorPublishers.push_back(image_transport->advertise(name, 1));
         auto & publisher = visionSensorPublishers.back();
         sensor->sigStateChanged().connect([this, sensor, &publisher]() {
@@ -285,8 +283,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     rangeVisionSensorSwitchServers.clear();
     rangeVisionSensorSwitchServers.reserve(rangeVisionSensors_.size());
     for (auto sensor : rangeVisionSensors_) {
-        std::string name = sensor->name();
-        std::replace(name.begin(), name.end(), '-', '_');
+        std::string name = getROS2Name(sensor->name());
         auto publisher = node_->create_publisher<sensor_msgs::msg::PointCloud2>(
             name + "/point_cloud", 1);
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
@@ -324,8 +321,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     rangeSensorPcSwitchServers.reserve(rangeSensors_.size());
     for (auto sensor : rangeSensors_) {
         if (sensor->numPitchSamples() > 1) {
-            std::string name = sensor->name();
-            std::replace(name.begin(), name.end(), '-', '_');
+            std::string name = getROS2Name(sensor->name());
             auto pc_publisher = node_->create_publisher<
                 sensor_msgs::msg::PointCloud>(name + "/point_cloud", 1);
             sensor->sigStateChanged().connect([this, sensor, pc_publisher]() {
@@ -342,8 +338,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
                          sensor->name().c_str(),
                          sensor->scanRate());
         } else {
-            std::string name = sensor->name();
-            std::replace(name.begin(), name.end(), '-', '_');
+            std::string name = getROS2Name(sensor->name());
             auto publisher = node_->create_publisher<
                 sensor_msgs::msg::LaserScan>(name + "/scan", 1);
             sensor->sigStateChanged().connect([this, sensor, publisher]() {

@@ -48,7 +48,6 @@ if(DEFINED ENV{ROS_VERSION})
                 ROS2Plugin.cpp
                 WorldROS2Item.cpp
                 BodyROS2Item.cpp
-                deprecated/BodyPublisherItem.cpp
                 ${mofiles}
         )
 

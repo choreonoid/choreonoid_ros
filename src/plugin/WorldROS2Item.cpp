@@ -15,7 +15,6 @@
 #include <cnoid/SimulationBar>
 #include <cnoid/SimulatorItem>
 #include <cnoid/WorldItem>
-// #include <ros/ros.h>
 #include <rclcpp/rclcpp.hpp>
 #include <rosgraph_msgs/msg/clock.hpp>
 
@@ -24,7 +23,7 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class WorldROS2Item::Impl : public rclcpp::Node
+class WorldROS2Item::Impl
 {
 public:
     WorldROS2Item *self;
@@ -33,7 +32,9 @@ public:
     SimulatorItem *currentSimulatorItem;
     ScopedConnectionSet currentSimulatorItemConnections;
 
-    //    unique_ptr<ros::NodeHandle> rosNode;
+    rclcpp::Node::SharedPtr rosNode;
+    rclcpp::Context::SharedPtr rosContext;
+
     rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clockPublisher;
     double maxClockPublishingRate;
     double clockPublishingInterval;
@@ -52,6 +53,8 @@ public:
     void onSimulationStarted();
     void onSimulationStep();
     void onSimulationFinished();
+    void setUpROS2();
+    void tearDownROS2();
 };
 
 }  // namespace cnoid
@@ -68,8 +71,7 @@ WorldROS2Item::WorldROS2Item()
 }
 
 WorldROS2Item::Impl::Impl(WorldROS2Item *self)
-    : rclcpp::Node("world_ros", rclcpp::NodeOptions())
-    , self(self)
+    : self(self)
 {
     maxClockPublishingRate = 100.0;
     initialize();
@@ -82,8 +84,7 @@ WorldROS2Item::WorldROS2Item(const WorldROS2Item &org)
 }
 
 WorldROS2Item::Impl::Impl(WorldROS2Item *self, const Impl &org)
-    : rclcpp::Node("world_ros", rclcpp::NodeOptions())
-    , self(self)
+    : self(self)
 {
     maxClockPublishingRate = org.maxClockPublishingRate;
     initialize();
@@ -134,18 +135,14 @@ void WorldROS2Item::Impl::initializeWorld(WorldItem *worldItem)
 
     this->worldItem = worldItem;
 
-    string name = worldItem->name();
-    std::replace(name.begin(), name.end(), '-', '_');
-    //    rosNode.reset(new ros::NodeHandle(name));
-
-    initializeClockPublisher();
+    setUpROS2();
 }
 
 void WorldROS2Item::Impl::initializeClockPublisher()
 {
     clockPublisher.reset();
     if (maxClockPublishingRate > 0.0) {
-        clockPublisher = create_publisher<rosgraph_msgs::msg::Clock>("/clock",
+        clockPublisher = rosNode->create_publisher<rosgraph_msgs::msg::Clock>("/clock",
                                                                      1);
     }
 }
@@ -156,13 +153,8 @@ void WorldROS2Item::setMaxClockPublishingRate(double rate)
     impl->initializeClockPublisher();
 }
 
-void WorldROS2Item::Impl::clearWorld()
-{
-    //    if(rosNode){
-    //        rosNode.reset();
-    //        clockPublisher.shutdown();
-    //        this->;
-    //    }
+void WorldROS2Item::Impl::clearWorld() {
+    tearDownROS2();
 }
 
 void WorldROS2Item::Impl::onSimulationAboutToStart(SimulatorItem *simulatorItem)
@@ -239,4 +231,31 @@ bool WorldROS2Item::restore(const Archive &archive)
 {
     archive.read("max_clock_publishing_rate", impl->maxClockPublishingRate);
     return true;
+}
+
+void WorldROS2Item::Impl::setUpROS2()
+{
+    if(not rosContext or not rclcpp::ok(rosContext))
+    {
+        rosContext = std::make_shared<rclcpp::Context>();
+        rosContext->init(0, nullptr);
+    }
+
+    string name = worldItem->name();
+    std::replace(name.begin(), name.end(), '-', '_');
+    rosNode = std::make_unique<rclcpp::Node>(name, rclcpp::NodeOptions().context(rosContext));
+
+    initializeClockPublisher();
+}
+
+void WorldROS2Item::Impl::tearDownROS2()
+{
+    if(rclcpp::ok(rosContext))
+    {
+        rclcpp::shutdown(rosContext);
+    }
+    if(rosContext)
+    {
+        rosContext = nullptr;
+    }
 }

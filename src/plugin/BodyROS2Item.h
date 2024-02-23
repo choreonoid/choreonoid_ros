@@ -107,7 +107,7 @@ private:
     std::ostream &os;
 
     rclcpp::Context::SharedPtr rosContext;
-    rclcpp::Node::SharedPtr node_;
+    rclcpp::Node::SharedPtr rosNode;
 
     std::string bodyName;
 

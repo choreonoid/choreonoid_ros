@@ -535,10 +535,26 @@ void BodyROS2Item::updateRangeVisionSensor(
     const unsigned char *pixels = sensor->constImage().pixels();
     range.data.resize(points.size() * range.point_step);
     unsigned char *dst = (unsigned char *) &(range.data[0]);
+
+    Matrix3f Ro = Matrix3f::Identity();
+    bool hasRo = !sensor->opticalFrameRotation().isIdentity();
+    if(hasRo) {
+        Ro = sensor->opticalFrameRotation().cast<float>();
+    }
+
     for (size_t j = 0; j < points.size(); ++j) {
-        float x = points[j].x();
-        float y = -points[j].y();
-        float z = -points[j].z();
+        float x, y, z;
+
+        if (hasRo) {
+            const Vector3f point = Ro * points[j];
+            x = point.x();
+            y = - point.y();
+            z = - point.z();
+        } else {
+            x = points[j].x();
+            y = - points[j].y();
+            z = - points[j].z();
+        }
         std::memcpy(&dst[0], &x, 4);
         std::memcpy(&dst[4], &y, 4);
         std::memcpy(&dst[8], &z, 4);
@@ -604,6 +620,18 @@ void BodyROS2Item::update3DRangeSensor(
     const int numYawSamples = sensor->numYawSamples();
     const double yawStep = sensor->yawStep();
 
+    range.points.resize(numPitchSamples * numYawSamples);
+
+    Matrix3f Ro = Matrix3f::Identity();
+    bool hasRo = !sensor->opticalFrameRotation().isIdentity();
+    if (hasRo) {
+        Ro = sensor->opticalFrameRotation().cast<float>();
+    }
+
+    // class variables repeatedly used in the following loop
+    Eigen::Vector3f p; 
+    geometry_msgs::msg::Point32 point;
+
     for (int pitch = 0; pitch < numPitchSamples; ++pitch) {
         const double pitchAngle = pitch * pitchStep
                                   - sensor->pitchRange() / 2.0;
@@ -612,14 +640,18 @@ void BodyROS2Item::update3DRangeSensor(
 
         for (int yaw = 0; yaw < numYawSamples; ++yaw) {
             const double distance = sensor->rangeData()[srctop + yaw];
-            if (distance <= sensor->maxDistance()) {
-                double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
-                geometry_msgs::msg::Point32 point;
-                point.x = distance * cosPitchAngle * sin(-yawAngle);
-                point.y = distance * sin(pitchAngle);
-                point.z = -distance * cosPitchAngle * cos(-yawAngle);
-                range.points.push_back(point);
+            const double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
+            
+            p.x() = distance * cosPitchAngle * sin(-yawAngle);
+            p.y() = distance * sin(pitchAngle);
+            p.z() = - distance * cosPitchAngle * cos(-yawAngle);
+            if (hasRo) {
+                p = Ro * p;
             }
+            point.set__x(p.x());
+            point.set__y(p.y());
+            point.set__z(p.z());
+            range.points[srctop + yaw] = point;
         }
     }
 

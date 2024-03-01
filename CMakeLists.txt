@@ -62,5 +62,10 @@ if(DEFINED ENV{ROS_VERSION})
     )
   elseif($ENV{ROS_VERSION} EQUAL 2)
     ament_package()
+
+    install(DIRECTORY
+      launch/ros2
+      DESTINATION share/${PROJECT_NAME}/launch
+    )
   endif()
 endif()

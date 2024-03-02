@@ -13,12 +13,7 @@
 #include <sensor_msgs/msg/laser_scan.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#ifdef CNOID_ROS_PLUGIN_USE_POINTCLOUD1
-#include <sensor_msgs/msg/point_cloud.hpp>
-typedef sensor_msgs::msg::PointCloud PointCloudTypeForRangeSensor;
-#else
 typedef sensor_msgs::msg::PointCloud2 PointCloudTypeForRangeSensor;
-#endif
 
 #include "gettext.h"
 #include <fmt/format.h>

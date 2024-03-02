@@ -116,22 +116,22 @@ bool BodyROS2Item::start()
     std::replace(name.begin(), name.end(), '-', '_');
     rosNode = std::make_unique<rclcpp::Node>(name, rclcpp::NodeOptions().context(rosContext));
 
-    image_transport = std::make_shared<image_transport::ImageTransport>(rosNode);
+    imageTransport = std::make_shared<image_transport::ImageTransport>(rosNode);
     // buffer of preserve currently state of joints.
-    joint_state_.header.stamp = getStampMsgFromSec(controlTime_);
-    joint_state_.name.resize(body()->numAllJoints());
-    joint_state_.position.resize(body()->numAllJoints());
-    joint_state_.velocity.resize(body()->numAllJoints());
-    joint_state_.effort.resize(body()->numAllJoints());
+    jointState.header.stamp = getStampMsgFromSec(controlTime_);
+    jointState.name.resize(body()->numAllJoints());
+    jointState.position.resize(body()->numAllJoints());
+    jointState.velocity.resize(body()->numAllJoints());
+    jointState.effort.resize(body()->numAllJoints());
 
     // preserve initial state of joints.
     for (size_t i = 0; i < body()->numAllJoints(); i++) {
         Link *joint = body()->joint(i);
 
-        joint_state_.name[i] = joint->name();
-        joint_state_.position[i] = joint->q();
-        joint_state_.velocity[i] = joint->dq();
-        joint_state_.effort[i] = joint->u();
+        jointState.name[i] = joint->name();
+        jointState.position[i] = joint->q();
+        jointState.velocity[i] = joint->dq();
+        jointState.effort[i] = joint->u();
     }
 
     createSensors(simulationBody);
@@ -174,9 +174,9 @@ void BodyROS2Item::createSensors(BodyPtr body)
     }
 
     auto getROS2Name = [this](const std::string &name) {
-        std::string ros_name = std::string(rosNode->get_fully_qualified_name()) + "/" + name;
-        std::replace(ros_name.begin(), ros_name.end(), '-', '_');
-        return ros_name;
+        std::string rosName = std::string(rosNode->get_fully_qualified_name()) + "/" + name;
+        std::replace(rosName.begin(), rosName.end(), '-', '_');
+        return rosName;
     };
 
     forceSensorPublishers.clear();
@@ -259,7 +259,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     visionSensorSwitchServers.reserve(visionSensors_.size());
     for (CameraPtr sensor : visionSensors_) {
         std::string name = getROS2Name(sensor->name());
-        visionSensorPublishers.push_back(image_transport->advertise(name, 1));
+        visionSensorPublishers.push_back(imageTransport->advertise(name, 1));
         auto & publisher = visionSensorPublishers.back();
         sensor->sigStateChanged().connect([this, sensor, &publisher]() {
             updateVisionSensor(sensor, publisher);
@@ -365,17 +365,17 @@ bool BodyROS2Item::control()
 
     if (updateSince > jointStateUpdatePeriod) {
         // publish current joint states
-        joint_state_.header.stamp = getStampMsgFromSec(controlTime_);
+        jointState.header.stamp = getStampMsgFromSec(controlTime_);
 
         for (int i = 0; i < body()->numAllJoints(); i++) {
             Link *joint = body()->joint(i);
 
-            joint_state_.position[i] = joint->q();
-            joint_state_.velocity[i] = joint->dq();
-            joint_state_.effort[i] = joint->u();
+            jointState.position[i] = joint->q();
+            jointState.velocity[i] = joint->dq();
+            jointState.effort[i] = joint->u();
         }
 
-        jointStatePublisher->publish(joint_state_);
+        jointStatePublisher->publish(jointState);
         jointStateLastUpdate += jointStateUpdatePeriod;
     }
 

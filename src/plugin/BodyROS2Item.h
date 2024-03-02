@@ -1,5 +1,5 @@
-#ifndef CNOID_ROS2_PLUGIN_BODY_ROS2_ITEM_H
-#define CNOID_ROS2_PLUGIN_BODY_ROS2_ITEM_H
+#ifndef CNOID_ROS_PLUGIN_BODY_ROS2_ITEM_H
+#define CNOID_ROS_PLUGIN_BODY_ROS2_ITEM_H
 
 #include <cnoid/Archive>
 #include <cnoid/BasicSensorSimulationHelper>

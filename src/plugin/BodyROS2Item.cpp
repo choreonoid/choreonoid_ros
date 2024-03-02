@@ -132,8 +132,8 @@ bool BodyROS2Item::start()
     createSensors(simulationBody);
 
     jointStatePublisher
-        = rosNode->create_publisher<sensor_msgs::msg::JointState>("joint_states",
-                                                                1000);
+        = rosNode->create_publisher<sensor_msgs::msg::JointState>(getROS2Name("joint_states"),
+                                                                  1000);
     jointStateUpdatePeriod = 1.0 / jointStateUpdateRate;
     jointStateLastUpdate = io->currentTime();
     RCLCPP_DEBUG(rosNode->get_logger(),
@@ -167,12 +167,6 @@ void BodyROS2Item::createSensors(BodyPtr body)
             }
         }
     }
-
-    auto getROS2Name = [this](const std::string &name) {
-        std::string rosName = std::string(rosNode->get_fully_qualified_name()) + "/" + name;
-        std::replace(rosName.begin(), rosName.end(), '-', '_');
-        return rosName;
-    };
 
     forceSensorPublishers.clear();
     forceSensorPublishers.reserve(forceSensors_.size());
@@ -684,4 +678,10 @@ builtin_interfaces::msg::Time BodyROS2Item::getStampMsgFromSec(double sec)
     msg.sec = int(sec);
     msg.nanosec = (sec - int(sec)) * 1000000000;
     return msg;
+}
+
+std::string BodyROS2Item::getROS2Name(const std::string &name) const {
+    std::string rosName = std::string(rosNode->get_fully_qualified_name()) + "/" + name;
+    std::replace(rosName.begin(), rosName.end(), '-', '_');
+    return rosName;
 }

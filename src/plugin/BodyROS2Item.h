@@ -164,6 +164,8 @@ private:
                       std_srvs::srv::SetBool::Response::SharedPtr response,
                       Device *sensor);
     builtin_interfaces::msg::Time getStampMsgFromSec(double sec);
+
+    std::string getROS2Name(const std::string &name) const;
 };
 
 typedef ref_ptr<BodyROS2Item> BodyROS2ItemPtr;

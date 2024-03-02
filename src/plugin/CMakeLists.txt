@@ -23,7 +23,9 @@ if(DEFINED ENV{ROS_VERSION})
       ${catkin_LIBRARIES}
       Choreonoid::CnoidBodyPlugin
     )
-    option(USE_POINTCLOUD1_IN_BODY_ROS_ITEM "Use the PointCloud type instead of PointCoud2 for publishing range sensor data" OFF)
+
+    # PointCloud(1) is deprecated in ROS 2, but it is still used in ROS 1
+    option(USE_POINTCLOUD1_IN_BODY_ROS_ITEM "Use the PointCloud type instead of PointCloud2 for publishing range sensor data with ROS 1" OFF)
     mark_as_advanced(USE_POINTCLOUD1_IN_BODY_ROS_ITEM)
 
     if(USE_POINTCLOUD1_IN_BODY_ROS_ITEM)

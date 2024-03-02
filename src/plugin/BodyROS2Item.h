@@ -95,7 +95,7 @@ private:
     double timeStep_;
 
     /* joint states */
-    sensor_msgs::msg::JointState joint_state_;
+    sensor_msgs::msg::JointState jointState;
     std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::JointState>>
         jointStatePublisher;
     double jointStateUpdateRate;
@@ -118,7 +118,7 @@ private:
     std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr>
         accelSensorPublishers;
 
-    std::shared_ptr<image_transport::ImageTransport> image_transport = nullptr;
+    std::shared_ptr<image_transport::ImageTransport> imageTransport = nullptr;
     std::vector<image_transport::Publisher> visionSensorPublishers;
 
     std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>

@@ -1,5 +1,5 @@
-#ifndef CHOREONOID_ROS__ROS2PLUGIN_HPP_
-#define CHOREONOID_ROS__ROS2PLUGIN_HPP_
+#ifndef CNOID_ROS_PLUGIN_ROS2_PLUGIN_HPP_
+#define CNOID_ROS_PLUGIN_ROS2_PLUGIN_HPP_
 
 #include <cnoid/Plugin>
 #include <rclcpp/rclcpp.hpp>
@@ -11,4 +11,4 @@ public:
     virtual bool initialize();
 };
 
-#endif  // CHOREONOID_ROS__ROS2PLUGIN_HPP_
+#endif  // CNOID_ROS_PLUGIN_ROS2_PLUGIN_HPP_

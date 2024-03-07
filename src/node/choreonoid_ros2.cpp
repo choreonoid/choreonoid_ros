@@ -26,7 +26,7 @@ int main(int argc, char** argv)
       plugin_manager->addPluginPath(toUTF8(pluginPath));
     }
 
-    auto plugin_path = ament_index_cpp::get_package_share_directory("choreonoid_ros2") + "/../../lib/choreonoid_ros2";
+    auto plugin_path = ament_index_cpp::get_package_share_directory("choreonoid_ros") + "/../../lib/choreonoid_ros";
     plugin_manager->addPluginPath(plugin_path);
 
     app.requirePluginToCustomizeApplication("ROS2");

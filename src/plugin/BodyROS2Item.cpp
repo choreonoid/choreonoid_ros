@@ -5,15 +5,12 @@
 #include <cnoid/MessageView>
 #include <cnoid/PutPropertyFunction>
 
-#include <geometry_msgs/msg/point32.hpp>
 #include <geometry_msgs/msg/wrench_stamped.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
-
 #include <sensor_msgs/msg/point_cloud2.hpp>
-typedef sensor_msgs::msg::PointCloud2 PointCloudTypeForRangeSensor;
 
 #include "gettext.h"
 #include <fmt/format.h>

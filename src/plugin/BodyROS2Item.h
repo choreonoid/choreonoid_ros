@@ -15,7 +15,6 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-// #include <sensor_msgs/msg/image_encodings.hpp>
 #include <geometry_msgs/msg/wrench_stamped.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud.hpp>

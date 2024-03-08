@@ -309,7 +309,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
         if (sensor->numPitchSamples() > 1) {
             std::string name = getROS2Name(sensor->name());
             auto pc_publisher = rosNode->create_publisher<
-                sensor_msgs::msg::PointCloud>(name + "/point_cloud", 1);
+                sensor_msgs::msg::PointCloud2>(name + "/point_cloud", 1);
             sensor->sigStateChanged().connect([this, sensor, pc_publisher]() {
                 update3DRangeSensor(sensor, pc_publisher);
             });
@@ -590,12 +590,12 @@ void BodyROS2Item::updateRangeSensor(
 
 void BodyROS2Item::update3DRangeSensor(
     RangeSensor *sensor,
-    rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr publisher)
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher)
 {
     if (!sensor->on()) {
         return;
     }
-    sensor_msgs::msg::PointCloud range;
+    sensor_msgs::msg::PointCloud2 range;
     // Header Info
     range.header.stamp = getStampMsgFromSec(io->currentTime());
     range.header.frame_id = sensor->name();
@@ -606,38 +606,56 @@ void BodyROS2Item::update3DRangeSensor(
     const int numYawSamples = sensor->numYawSamples();
     const double yawStep = sensor->yawStep();
 
-    range.points.resize(numPitchSamples * numYawSamples);
+    range.height = numPitchSamples;
+    range.width = numYawSamples;
+    range.point_step = 12;
+    range.row_step = range.width * range.point_step;
+    range.fields.resize(3);
+    range.fields[0].name = "x";
+    range.fields[0].offset = 0;
+    range.fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    range.fields[0].count = 4;
+    range.fields[1].name = "y";
+    range.fields[1].offset = 4;
+    range.fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    range.fields[1].count = 4;
+    range.fields[2].name = "z";
+    range.fields[2].offset = 8;
+    range.fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    range.fields[2].count = 4;
 
-    Matrix3f Ro = Matrix3f::Identity();
-    bool hasRo = !sensor->opticalFrameRotation().isIdentity();
-    if (hasRo) {
-        Ro = sensor->opticalFrameRotation().cast<float>();
-    }
+    range.data.resize(numPitchSamples * numYawSamples * range.point_step);
+    unsigned char* dst = (unsigned char*)&(range.data[0]);
 
-    // class variables repeatedly used in the following loop
-    Eigen::Vector3f p; 
-    geometry_msgs::msg::Point32 point;
+    auto Ro = [&]() -> std::optional<Matrix3f> {
+        if(sensor->opticalFrameRotation().isIdentity()){
+            return std::nullopt;
+        }else{
+            return sensor->opticalFrameRotation().cast<float>();
+        }
+    }();
 
-    for (int pitch = 0; pitch < numPitchSamples; ++pitch) {
-        const double pitchAngle = pitch * pitchStep
-                                  - sensor->pitchRange() / 2.0;
+    for(int pitchIndex = 0; pitchIndex < numPitchSamples; ++pitchIndex){
+        const double pitchAngle =
+                pitchIndex * pitchStep - sensor->pitchRange() / 2.0;
         const double cosPitchAngle = cos(pitchAngle);
-        const int srctop = pitch * numYawSamples;
+        const double sinPitchAngle = sin(pitchAngle);
+        const int srctop = pitchIndex * numYawSamples;
 
-        for (int yaw = 0; yaw < numYawSamples; ++yaw) {
-            const double distance = sensor->rangeData()[srctop + yaw];
-            const double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
-            
+        for (int yawIndex = 0; yawIndex < numYawSamples; ++yawIndex) {
+            const double distance = sensor->rangeData()[srctop + yawIndex];
+            const double yawAngle = yawIndex * yawStep - sensor->yawRange() / 2.0;
+            Vector3f p;
             p.x() = distance * cosPitchAngle * sin(-yawAngle);
             p.y() = distance * sin(pitchAngle);
             p.z() = - distance * cosPitchAngle * cos(-yawAngle);
-            if (hasRo) {
-                p = Ro * p;
+            if (Ro) {
+                p = Ro.value() * p;
             }
-            point.set__x(p.x());
-            point.set__y(p.y());
-            point.set__z(p.z());
-            range.points[srctop + yaw] = point;
+            std::memcpy(&dst[0], &p.x(), 4);
+            std::memcpy(&dst[4], &p.y(), 4);
+            std::memcpy(&dst[8], &p.z(), 4);
+            dst += range.point_step;
         }
     }
 

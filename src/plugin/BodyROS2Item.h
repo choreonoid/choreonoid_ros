@@ -124,7 +124,7 @@ private:
         rangeVisionSensorPublishers;
     std::vector<rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr>
         rangeSensorPublishers;
-    std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr>
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
         rangeSensorPcPublishers;
 
     std::vector<std::shared_ptr<rclcpp::ServiceBase>> forceSensorSwitchServers;
@@ -157,7 +157,7 @@ private:
         rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher);
     void update3DRangeSensor(
         RangeSensor *sensor,
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr publisher);
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher);
 
     void switchDevice(std_srvs::srv::SetBool::Request::ConstSharedPtr request,
                       std_srvs::srv::SetBool::Response::SharedPtr response,

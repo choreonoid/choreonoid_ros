@@ -120,7 +120,7 @@ bool BodyROS2Item::start()
     for (size_t i = 0; i < body()->numAllJoints(); i++) {
         Link *joint = body()->joint(i);
 
-        jointState.name[i] = joint->name();
+        jointState.name[i] = joint->jointName();
         jointState.position[i] = joint->q();
         jointState.velocity[i] = joint->dq();
         jointState.effort[i] = joint->u();

@@ -522,25 +522,32 @@ void BodyROS2Item::updateRangeVisionSensor(
     range.data.resize(points.size() * range.point_step);
     unsigned char *dst = (unsigned char *) &(range.data[0]);
 
-    Matrix3f Ro = Matrix3f::Identity();
-    bool hasRo = !sensor->opticalFrameRotation().isIdentity();
-    if(hasRo) {
-        Ro = sensor->opticalFrameRotation().cast<float>();
-    }
+    auto Ro = [&]() -> std::optional<Matrix3f> {
+        if(sensor->opticalFrameRotation().isIdentity()){
+            return std::nullopt;
+        }else{
+            return sensor->opticalFrameRotation().cast<float>();
+        }
+    }();
 
     for (size_t j = 0; j < points.size(); ++j) {
-        float x, y, z;
+        Vector3f point = points[j];
 
-        if (hasRo) {
-            const Vector3f point = Ro * points[j];
-            x = point.x();
-            y = - point.y();
-            z = - point.z();
-        } else {
-            x = points[j].x();
-            y = - points[j].y();
-            z = - points[j].z();
+        // transforms a point into the Choreonoid-default camera coordinate 
+        // if optical frame rotation is set
+        if (Ro) {
+            // image frame = optical frame rotation (Ro) * camera frame
+            // => camera frame = Ro^T * image frame
+            point = Ro.value().transpose() * point;
         }
+
+        // converts camera coordinate from Choreonoid to ROS (URDF)
+        //   Choreonoid: X-right, Y-upward, Z-backward
+        //   ROS (URDF): X-right, Y-downward, Z-forward
+        const float x = point.x();
+        const float y = - point.y();
+        const float z = - point.z();
+
         std::memcpy(&dst[0], &x, 4);
         std::memcpy(&dst[4], &y, 4);
         std::memcpy(&dst[8], &z, 4);

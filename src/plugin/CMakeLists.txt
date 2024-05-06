@@ -69,8 +69,5 @@ if(DEFINED ENV{ROS_VERSION})
       #  add_subdirectory(pybind11)
     endif ()
 
-    install(TARGETS ${target}
-      LIBRARY DESTINATION lib/${PROJECT_NAME})
-
   endif()
 endif()

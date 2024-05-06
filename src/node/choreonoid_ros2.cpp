@@ -3,9 +3,11 @@
 
 #include <cnoid/App>
 #include <cnoid/PluginManager>
+#include <cnoid/UTF8>
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 int main(int argc, char** argv)
 {
@@ -26,8 +28,25 @@ int main(int argc, char** argv)
 
     cnoid::App app(nonRosArgc, nonRosArgv, "Choreonoid-ROS2", "Choreonoid");
 
-    cnoid::PluginManager::instance()->addPluginDirectoryAsPrefix(
-        ament_index_cpp::get_package_prefix("choreonoid_ros"));
+    auto pluginManager = cnoid::PluginManager::instance();
+
+    const char* prefixVar = getenv("AMENT_PREFIX_PATH");
+    if(prefixVar){
+        do {
+            const char* begin = prefixVar;
+            while(*prefixVar != ':' && *prefixVar) prefixVar++;
+            pluginManager->addPluginDirectoryAsPrefix(cnoid::toUTF8(std::string(begin, prefixVar)));
+        } while (0 != *prefixVar++);
+    } else {
+        try {
+            pluginManager->addPluginDirectoryAsPrefix(
+                ament_index_cpp::get_package_prefix("choreonoid_ros"));
+        }
+        catch(const ament_index_cpp::PackageNotFoundError& ex){
+            std::cerr << "Error: The choreonoid_ros package is not found." << std::endl;
+            return 1;
+        }
+    }
 
     app.requirePluginToCustomizeApplication("ROS2");
 

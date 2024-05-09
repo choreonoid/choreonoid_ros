@@ -13,11 +13,17 @@ ROS2Plugin::ROS2Plugin()
 {
     require("Body");
 }
+
 bool ROS2Plugin::initialize()
 {
     WorldROS2Item::initializeClass(this);
     BodyROS2Item::initializeClass(this);
 
+    return true;
+}
+
+bool ROS2Plugin::customizeApplication(AppCustomizationUtil& /* app */)
+{
     return true;
 }
 

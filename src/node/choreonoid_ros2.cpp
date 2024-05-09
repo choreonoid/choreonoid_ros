@@ -48,9 +48,26 @@ int main(int argc, char** argv)
         }
     }
 
-    app.requirePluginToCustomizeApplication("ROS2");
+    if(!app.requirePluginToCustomizeApplication("ROS2")){
+        if(app.error() == cnoid::App::PluginNotFound){
+            auto message = app.errorMessage();
+            if(message.empty()){
+                std::cerr << "ROS2 plugin is not found." << std::endl;
+            } else {
+                std::cerr << "ROS2 plugin cannot be loaded.\n";
+                std::cerr << message << std::endl;
+            }
+        } else {
+            std::cerr << "ROS2 plugin does not work corerctly." << std::endl;
+        }
+        return 1;
+    }
+    
+    rclcpp::init(argc, argv);
 
     int ret = app.exec();
+
+    rclcpp::shutdown();
 
     return ret;
 }

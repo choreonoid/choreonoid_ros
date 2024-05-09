@@ -30,6 +30,7 @@ void BodyROS2Item::initializeClass(ExtensionManager *ext)
 BodyROS2Item::BodyROS2Item()
     : os(MessageView::instance()->cout())
 {
+    bodyItem = nullptr;
     io = nullptr;
     jointStateUpdateRate = 100.0;
 }
@@ -80,6 +81,57 @@ void BodyROS2Item::doPutProperties(PutPropertyFunction &putProperty)
 }
 
 
+void BodyROS2Item::onTreePathChanged()
+{
+    bool hasValidTargetBody = false;
+    if(isConnectedToRoot()){
+        auto bodyItem = findOwnerItem<BodyItem>();
+        if(bodyItem){
+            if(bodyItem != this->bodyItem) {
+                initializeRosNode(bodyItem);
+            }
+            hasValidTargetBody = true;
+        }
+    }
+    if(!hasValidTargetBody){
+        finalizeRosNode();
+    }
+}
+
+
+void BodyROS2Item::initializeRosNode(BodyItem* bodyItem)
+{
+    finalizeRosNode();
+    
+    this->bodyItem = bodyItem;
+    std::string name = bodyItem->name();
+    std::replace(name.begin(), name.end(), '-', '_');
+    rosNode = std::make_shared<rclcpp::Node>(name);
+
+    executor = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+    executor->add_node(rosNode);
+    executorThread = std::thread([this](){ executor->spin(); });
+
+    jointStatePublisher = rosNode->create_publisher<sensor_msgs::msg::JointState>(
+        getROS2Name("joint_states"), 1);
+}
+
+
+void BodyROS2Item::finalizeRosNode()
+{
+    if(executor){
+        executor->cancel();
+        executorThread.join();
+        executor->remove_node(rosNode);
+        executor.reset();
+    }
+
+    rosNode.reset();
+
+    bodyItem = nullptr;
+}
+
+
 bool BodyROS2Item::initialize(ControllerIO *io)
 {
     if (!io->body()) {
@@ -102,12 +154,6 @@ bool BodyROS2Item::initialize(ControllerIO *io)
 
 bool BodyROS2Item::start()
 {
-    rosContext = std::make_shared<rclcpp::Context>();
-    rosContext->init(0, nullptr);
-    std::string name = simulationBody->name();
-    std::replace(name.begin(), name.end(), '-', '_');
-    rosNode = std::make_unique<rclcpp::Node>(name, rclcpp::NodeOptions().context(rosContext));
-
     imageTransport = std::make_shared<image_transport::ImageTransport>(rosNode);
     // buffer of preserve currently state of joints.
     jointState.header.stamp = getStampMsgFromSec(controlTime_);
@@ -128,9 +174,6 @@ bool BodyROS2Item::start()
 
     createSensors(simulationBody);
 
-    jointStatePublisher
-        = rosNode->create_publisher<sensor_msgs::msg::JointState>(getROS2Name("joint_states"),
-                                                                  1000);
     jointStateUpdatePeriod = 1.0 / jointStateUpdateRate;
     jointStateLastUpdate = io->currentTime();
     RCLCPP_DEBUG(rosNode->get_logger(),
@@ -363,16 +406,6 @@ bool BodyROS2Item::control()
 
         jointStatePublisher->publish(jointState);
         jointStateLastUpdate += jointStateUpdatePeriod;
-    }
-
-    // spin some with custom context
-    {
-        rclcpp::ExecutorOptions options;
-        options.context = rosContext;
-        rclcpp::executors::SingleThreadedExecutor executor(options);
-        executor.add_node(rosNode, false);
-        executor.spin_some();
-        executor.remove_node(rosNode, false);
     }
 
     return true;
@@ -681,17 +714,6 @@ void BodyROS2Item::switchDevice(
 {
     sensor->on(request->data);
     response->success = (request->data == sensor->on());
-}
-
-void BodyROS2Item::stop()
-{
-    if(rclcpp::ok(rosContext)) {
-        rclcpp::shutdown(rosContext);
-        rosContext = nullptr;
-    }
-    if (rosNode) {
-        rosNode = nullptr;
-    }
 }
 
 builtin_interfaces::msg::Time BodyROS2Item::getStampMsgFromSec(double sec)

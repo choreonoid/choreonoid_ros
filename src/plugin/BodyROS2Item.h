@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <thread>
 
 #include "exportdecl.h"
 
@@ -48,7 +49,6 @@ public:
     virtual void input() override;
     virtual bool control() override;
     virtual void output() override;
-    virtual void stop() override;
 
     const Body *body() const { return simulationBody; };
     const DeviceList<ForceSensor> &forceSensors() const
@@ -78,12 +78,15 @@ public:
     void setModuleName(const std::string &name);
 
 protected:
-    virtual Item *doDuplicate() const override;
+    virtual Item *doDuplicate() const override; 
+    virtual void onTreePathChanged() override;
     virtual bool store(Archive &archive) override;
     virtual bool restore(const Archive &archive) override;
     virtual void doPutProperties(PutPropertyFunction &putProperty) override;
 
 private:
+    BodyItem* bodyItem;
+    
     BodyPtr simulationBody;
     DeviceList<ForceSensor> forceSensors_;
     DeviceList<RateGyroSensor> gyroSensors_;
@@ -105,8 +108,9 @@ private:
     double controlTime_;
     std::ostream &os;
 
-    rclcpp::Context::SharedPtr rosContext;
     rclcpp::Node::SharedPtr rosNode;
+    std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor;
+    std::thread executorThread;
 
     std::string bodyName;
 
@@ -136,6 +140,9 @@ private:
     std::vector<std::shared_ptr<rclcpp::ServiceBase>> rangeSensorSwitchServers;
     std::vector<std::shared_ptr<rclcpp::ServiceBase>> rangeSensorPcSwitchServers;
 
+    void initializeRosNode(BodyItem* bodyItem);
+    void finalizeRosNode();
+    
     void updateForceSensor(
         ForceSensor *sensor,
         rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr

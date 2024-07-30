@@ -1,4 +1,5 @@
 #include "BodyROSItem.h"
+#include "Format.h"
 #include <cnoid/BodyItem>
 #include <cnoid/Link>
 #include <cnoid/ItemManager>
@@ -21,13 +22,11 @@ typedef sensor_msgs::PointCloud PointCloudTypeForRangeSensor;
 typedef sensor_msgs::PointCloud2 PointCloudTypeForRangeSensor;
 #endif
 
-#include <fmt/format.h>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include "gettext.h"
 
 using namespace cnoid;
-using fmt::format;
 
 
 void BodyROSItem::initializeClass(ExtensionManager* ext)
@@ -98,7 +97,7 @@ bool BodyROSItem::initialize(ControllerIO* io)
 {
     if (!io->body()) {
         MessageView::instance()->putln(
-            format(_("BodyROSItem \"{0}\" is invalid because it is not assigned to a body."), displayName()),
+            formatR(_("BodyROSItem \"{0}\" is invalid because it is not assigned to a body."), displayName()),
             MessageView::WARNING);
         return false;
     }

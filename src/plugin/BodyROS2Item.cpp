@@ -1,4 +1,5 @@
 #include "BodyROS2Item.h"
+#include "Format.h"
 #include <cnoid/BodyItem>
 #include <cnoid/ItemManager>
 #include <cnoid/Link>
@@ -13,10 +14,8 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include "gettext.h"
-#include <fmt/format.h>
 
 using namespace cnoid;
-using fmt::format;
 using std::placeholders::_1;
 using std::placeholders::_2;
 
@@ -136,9 +135,9 @@ bool BodyROS2Item::initialize(ControllerIO *io)
 {
     if (!io->body()) {
         MessageView::instance()
-            ->putln(format(_("BodyROS2Item \"{0}\" is invalid because it is "
-                             "not assigned to a body."),
-                           displayName()),
+            ->putln(formatR(_("BodyROS2Item \"{0}\" is invalid because it is "
+                              "not assigned to a body."),
+                            displayName()),
                     MessageView::WARNING);
         return false;
     }

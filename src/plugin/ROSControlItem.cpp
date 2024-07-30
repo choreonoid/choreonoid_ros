@@ -3,17 +3,16 @@
 /////////////////////////////////
 
 #include "ROSControlItem.h"
+#include "Format.h"
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
 #include <cnoid/Archive>
 #include <cnoid/PutPropertyFunction>
-#include <fmt/format.h>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using namespace hardware_interface;
-using fmt::format;
 
 
 void ROSControlItem::initializeClass(ExtensionManager* ext)
@@ -79,8 +78,8 @@ bool ROSControlItem::initialize(ControllerIO* io)
     // Check body //
     if(!io->body()){
         mv->putln(
-            format(_("ROSControlItem \"{0}\" is invalid because it is not assigned to a body."),
-                   displayName()),
+            formatR(_("ROSControlItem \"{0}\" is invalid because it is not assigned to a body."),
+                    displayName()),
             MessageView::Error);
         return false;
     }
@@ -113,7 +112,7 @@ bool ROSControlItem::initialize(ControllerIO* io)
             // load hardware_interface  //
             if(!robotHWSim->initSim(nodeHandle, io)){
                 mv->putln(
-                    format(_("The hardware interface of {0} cannot be initialized."), displayName()),
+                    formatR(_("The hardware interface of {0} cannot be initialized."), displayName()),
                     MessageView::Error);
             }
         }
@@ -125,12 +124,12 @@ bool ROSControlItem::initialize(ControllerIO* io)
     }
     catch(pluginlib::LibraryLoadException& ex){
         mv->putln(
-            format(_("Failed to create robot simulation interface loader : {0}"), ex.what()),
+            formatR(_("Failed to create robot simulation interface loader : {0}"), ex.what()),
             MessageView::Error);
         return false;
     }
 
-    mv->putln(format(_("{0} has successfully been initialized"), displayName()));
+    mv->putln(formatR(_("{0} has successfully been initialized"), displayName()));
 
     return true;
 }

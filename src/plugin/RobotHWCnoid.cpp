@@ -3,6 +3,7 @@
 /////////////////////////////////
 
 #include "RobotHWCnoid.h"
+#include "Format.h"
 #include <cnoid/MessageView>
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -11,14 +12,12 @@
 #include <transmission_interface/transmission_parser.h>
 #include <joint_limits_interface/joint_limits_rosparam.h>
 #include <joint_limits_interface/joint_limits_urdf.h>
-#include <fmt/format.h>
 #include <unordered_map>
 #include <limits>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
-using fmt::format;
 
 
 namespace hardware_interface {
@@ -72,16 +71,16 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
         }
         if(jointInterfaces.empty()){
             mv->putln(
-                format(_("{0} on {1} does not specify any hardware interface."),
-                       transmission[i].name_, transmission[i].joints_[0].name_),
+                formatR(_("{0} on {1} does not specify any hardware interface."),
+                        transmission[i].name_, transmission[i].joints_[0].name_),
                 MessageView::Warning);
             continue;
         }
         else if(jointInterfaces.size() > 1){
             mv->putln(
-                format(_("{0} of transmission specifies multiple hardware interfaces. Currently the default "
-                         "robot hardware simulation interface only supports one. Using the first entry"),
-                       transmission[i].joints_[0].name_),
+                formatR(_("{0} of transmission specifies multiple hardware interfaces. Currently the default "
+                          "robot hardware simulation interface only supports one. Using the first entry"),
+                        transmission[i].joints_[0].name_),
                 MessageView::Warning);
         }
 
@@ -92,8 +91,8 @@ bool RobotHWCnoid::initSim(const ros::NodeHandle& nh, cnoid::ControllerIO* args)
         Link* link = io->body()->joint(jointNames[i].c_str());
         if(!link){
             mv->putln(
-                format(_("This robot has a joint named \"{0}\" which is not in the choreonoid model."),
-                       jointNames[i]),
+                formatR(_("This robot has a joint named \"{0}\" which is not in the choreonoid model."),
+                        jointNames[i]),
                 MessageView::Error);
             return false;
         }
@@ -182,13 +181,13 @@ bool RobotHWCnoid::loadURDF(const std::string& paramName)
         if(nodeHandle.searchParam(paramName, searchedParam)){
             if(!nodeHandle.getParam(searchedParam, urdfString)){
                 mv->putln(
-                    format(_("Waiting for URDF model.\nFinding parameter name : {0}"),
-                           searchedParam),
+                    formatR(_("Waiting for URDF model.\nFinding parameter name : {0}"),
+                            searchedParam),
                     MessageView::Warning);
                 sleep(1);
             }
         } else {
-            mv->putln(format(_("There are no parameter related to : {0}"), paramName),
+            mv->putln(formatR(_("There are no parameter related to : {0}"), paramName),
                       MessageView::Error);
             return false;
         }

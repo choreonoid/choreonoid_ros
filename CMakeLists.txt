@@ -56,10 +56,14 @@ if(DEFINED ENV{ROS_VERSION})
     # For ros_control
     install(FILES plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
-    install(DIRECTORY launch
-      DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-      USE_SOURCE_PERMISSIONS
-    )
+    # Install `launch` dir. only if `--install` option is set in catkin config
+    if(${CMAKE_INSTALL_PREFIX} MATCHES .*/install)
+      install(DIRECTORY launch
+          DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+          USE_SOURCE_PERMISSIONS
+          PATTERN "ros2" EXCLUDE
+        )
+    endif()
   elseif($ENV{ROS_VERSION} EQUAL 2)
     ament_package()
 

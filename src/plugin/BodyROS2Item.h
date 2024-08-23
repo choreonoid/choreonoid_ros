@@ -8,6 +8,7 @@
 #include <cnoid/ControllerItem>
 #include <cnoid/Device>
 #include <cnoid/DeviceList>
+#include <cnoid/Imu>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 
@@ -63,6 +64,7 @@ public:
     {
         return accelSensors_;
     }
+    const DeviceList<Imu>& imus() const { return imus_; }
     const DeviceList<Camera> &visionSensors() const { return visionSensors_; }
     const DeviceList<RangeCamera> &rangeVisionSensors() const
     {
@@ -91,6 +93,7 @@ private:
     DeviceList<ForceSensor> forceSensors_;
     DeviceList<RateGyroSensor> gyroSensors_;
     DeviceList<AccelerationSensor> accelSensors_;
+    DeviceList<Imu> imus_;
     DeviceList<Camera> visionSensors_;
     DeviceList<RangeCamera> rangeVisionSensors_;
     DeviceList<RangeSensor> rangeSensors_;
@@ -120,6 +123,8 @@ private:
         rateGyroSensorPublishers;
     std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr>
         accelSensorPublishers;
+    std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr>
+        imuPublishers;
 
     std::shared_ptr<image_transport::ImageTransport> imageTransport = nullptr;
     std::vector<image_transport::Publisher> visionSensorPublishers;
@@ -134,6 +139,7 @@ private:
     std::vector<std::shared_ptr<rclcpp::ServiceBase>> forceSensorSwitchServers;
     std::vector<std::shared_ptr<rclcpp::ServiceBase>> rateGyroSensorSwitchServers;
     std::vector<std::shared_ptr<rclcpp::ServiceBase>> accelSensorSwitchServers;
+    std::vector<std::shared_ptr<rclcpp::ServiceBase>> imuSwitchServers;
     std::vector<std::shared_ptr<rclcpp::ServiceBase>> visionSensorSwitchServers;
     std::vector<std::shared_ptr<rclcpp::ServiceBase>>
         rangeVisionSensorSwitchServers;
@@ -152,6 +158,9 @@ private:
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
     void updateAccelSensor(
         AccelerationSensor *sensor,
+        rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
+    void updateImu(
+        Imu *sensor,
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
     void updateVisionSensor(
         Camera *sensor,

@@ -194,6 +194,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     forceSensors_.assign(devices.extract<ForceSensor>());
     gyroSensors_.assign(devices.extract<RateGyroSensor>());
     accelSensors_.assign(devices.extract<AccelerationSensor>());
+    imus_.assign(devices.extract<Imu>());
     visionSensors_.assign(devices.extract<Camera>());
     rangeVisionSensors_.assign(devices.extract<RangeCamera>());
     rangeSensors_.assign(devices.extract<RangeSensor>());
@@ -278,6 +279,30 @@ void BodyROS2Item::createSensors(BodyPtr body)
                                                           requestCallback));
         RCLCPP_INFO(rosNode->get_logger(),
                     "Create accel sensor %s",
+                    sensor->name().c_str());
+    }
+
+    imuPublishers.clear();
+    imuPublishers.reserve(imus_.size());
+    imuSwitchServers.clear();
+    imuSwitchServers.reserve(imus_.size());
+    for (auto sensor : imus_) {
+        std::string name = getROS2Name(sensor->name());
+        auto publisher = rosNode->create_publisher<sensor_msgs::msg::Imu>(name, 1);
+        sensor->sigStateChanged().connect([this, sensor, publisher]() {
+            updateImu(sensor, publisher);
+        });
+        imuPublishers.push_back(publisher);
+        SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice,
+                                                    this,
+                                                    _1,
+                                                    _2,
+                                                    sensor);
+        imuSwitchServers.push_back(
+            rosNode->create_service<std_srvs::srv::SetBool>(name + "/set_enabled",
+                                                          requestCallback));
+        RCLCPP_INFO(rosNode->get_logger(),
+                    "Create IMU %s",
                     sensor->name().c_str());
     }
 
@@ -464,6 +489,24 @@ void BodyROS2Item::updateAccelSensor(
     publisher->publish(accel);
 }
 
+void BodyROS2Item::updateImu(
+    Imu *sensor,
+    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher)
+{
+    if (!sensor->on()) {
+        return;
+    }
+    sensor_msgs::msg::Imu imu;
+    imu.header.stamp = getStampMsgFromSec(io->currentTime());
+    imu.header.frame_id = sensor->name();
+    imu.angular_velocity.x = sensor->w()[0];
+    imu.angular_velocity.y = sensor->w()[1];
+    imu.angular_velocity.z = sensor->w()[2];
+    imu.linear_acceleration.x = sensor->dv()[0] / 10.0;
+    imu.linear_acceleration.y = sensor->dv()[1] / 10.0;
+    imu.linear_acceleration.z = sensor->dv()[2] / 10.0;
+    publisher->publish(imu);
+}
 
 void BodyROS2Item::updateVisionSensor(
     Camera *sensor,

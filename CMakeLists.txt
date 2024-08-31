@@ -24,6 +24,7 @@ if(DEFINED ENV{ROS_VERSION})
     find_package(
       ament_cmake REQUIRED COMPONENTS
       rclcpp
+      ament_index_cpp
     )
   endif()
 endif()

@@ -23,7 +23,7 @@ if(DEFINED ENV{ROS_VERSION})
   elseif ($ENV{ROS_VERSION} EQUAL 2)
     find_package(
       ament_cmake REQUIRED COMPONENTS
-      rclcpp
+      rclcpp ament_index_cpp
     )
   endif()
 endif()

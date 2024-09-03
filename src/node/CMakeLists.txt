@@ -8,7 +8,7 @@ if(DEFINED ENV{ROS_VERSION})
     install(TARGETS ${target} RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
   elseif($ENV{ROS_VERSION} EQUAL 2)
     add_executable(${target} choreonoid_ros2.cpp)
-    ament_target_dependencies(${target} rclcpp std_msgs sensor_msgs image_transport)
+    ament_target_dependencies(${target} rclcpp ament_index_cpp std_msgs sensor_msgs image_transport)
     set_target_properties(${target} PROPERTIES OUTPUT_NAME choreonoid)
     target_link_libraries(${target} Choreonoid::CnoidBase)
     install(TARGETS ${target}

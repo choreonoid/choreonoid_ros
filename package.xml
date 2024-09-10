@@ -29,6 +29,7 @@
   <depend condition="$ROS_VERSION == 1">joint_limits_interface</depend>
   <depend condition="$ROS_VERSION == 1">transmission_interface</depend>
   <depend condition="$ROS_VERSION == 1">urdf</depend>
+  <depend condition="$ROS_VERSION == 2">ament_index_cpp</depend>
 
   <export>
     <build_type condition="$ROS_VERSION == 1">cmake</build_type>

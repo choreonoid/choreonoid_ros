@@ -27,7 +27,8 @@ void BodyROS2Item::initializeClass(ExtensionManager *ext)
 
 
 BodyROS2Item::BodyROS2Item()
-    : os(MessageView::instance()->cout())
+    : os(MessageView::instance()->cout()),
+      threadPoolForPublishing(5)
 {
     bodyItem = nullptr;
     io = nullptr;
@@ -36,8 +37,9 @@ BodyROS2Item::BodyROS2Item()
 
 
 BodyROS2Item::BodyROS2Item(const BodyROS2Item &org)
-    : ControllerItem(org)
-    , os(MessageView::instance()->cout())
+    : ControllerItem(org),
+      os(MessageView::instance()->cout()),
+      threadPoolForPublishing(5)
 {
     io = nullptr;
     jointStateUpdateRate = 100.0;
@@ -287,9 +289,9 @@ void BodyROS2Item::createSensors(BodyPtr body)
     visionSensorSwitchServers.reserve(visionSensors_.size());
     for (CameraPtr sensor : visionSensors_) {
         std::string name = getROS2Name(sensor->name());
-        visionSensorPublishers.push_back(imageTransport->advertise(name, 1));
-        auto & publisher = visionSensorPublishers.back();
-        sensor->sigStateChanged().connect([this, sensor, &publisher]() {
+        auto publisher = imageTransport->advertise(name, 1);
+        visionSensorPublishers.push_back(publisher);
+        sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateVisionSensor(sensor, publisher);
         });
         SetBoolCallback requestCallback = std::bind(&BodyROS2Item::switchDevice,
@@ -412,147 +414,158 @@ bool BodyROS2Item::control()
 
 
 void BodyROS2Item::updateForceSensor(
-    ForceSensor *sensor,
+    ForceSensor* sensor,
     rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr publisher)
 {
     if (!sensor->on()) {
         return;
     }
-    geometry_msgs::msg::WrenchStamped force;
-    force.header.stamp = getStampMsgFromSec(io->currentTime());
-    force.header.frame_id = sensor->name();
-    force.wrench.force.x = sensor->F()[0] / 1000.0;
-    force.wrench.force.y = sensor->F()[1] / 1000.0;
-    force.wrench.force.z = sensor->F()[2] / 1000.0;
-    force.wrench.torque.x = sensor->F()[3] / 1000.0;
-    force.wrench.torque.y = sensor->F()[4] / 1000.0;
-    force.wrench.torque.z = sensor->F()[5] / 1000.0;
-    publisher->publish(force);
+    
+    geometry_msgs::msg::WrenchStamped::SharedPtr wrench = std::make_shared<geometry_msgs::msg::WrenchStamped>();
+    wrench->header.stamp = getStampMsgFromSec(io->currentTime());
+    wrench->header.frame_id = sensor->name();
+    wrench->wrench.force.x = sensor->F()[0] / 1000.0;
+    wrench->wrench.force.y = sensor->F()[1] / 1000.0;
+    wrench->wrench.force.z = sensor->F()[2] / 1000.0;
+    wrench->wrench.torque.x = sensor->F()[3] / 1000.0;
+    wrench->wrench.torque.y = sensor->F()[4] / 1000.0;
+    wrench->wrench.torque.z = sensor->F()[5] / 1000.0;
+
+    threadPoolForPublishing.start(
+        [publisher, wrench]{ publisher->publish(*wrench); });
 }
 
 
 void BodyROS2Item::updateRateGyroSensor(
-    RateGyroSensor *sensor,
+    RateGyroSensor* sensor,
     rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher)
 {
     if (!sensor->on()) {
         return;
     }
-    sensor_msgs::msg::Imu gyro;
-    gyro.header.stamp = getStampMsgFromSec(io->currentTime());
-    gyro.header.frame_id = sensor->name();
-    gyro.angular_velocity.x = sensor->w()[0];
-    gyro.angular_velocity.y = sensor->w()[1];
-    gyro.angular_velocity.z = sensor->w()[2];
-    publisher->publish(gyro);
+    sensor_msgs::msg::Imu::SharedPtr imu = std::shared_ptr<sensor_msgs::msg::Imu>();
+    imu->header.stamp = getStampMsgFromSec(io->currentTime());
+    imu->header.frame_id = sensor->name();
+    imu->angular_velocity.x = sensor->w()[0];
+    imu->angular_velocity.y = sensor->w()[1];
+    imu->angular_velocity.z = sensor->w()[2];
+
+    threadPoolForPublishing.start(
+        [publisher, imu]{ publisher->publish(*imu); });
 }
 
 
 void BodyROS2Item::updateAccelSensor(
-    AccelerationSensor *sensor,
+    AccelerationSensor* sensor,
     rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher)
 {
     if (!sensor->on()) {
         return;
     }
-    sensor_msgs::msg::Imu accel;
-    accel.header.stamp = getStampMsgFromSec(io->currentTime());
-    accel.header.frame_id = sensor->name();
-    accel.linear_acceleration.x = sensor->dv()[0] / 10.0;
-    accel.linear_acceleration.y = sensor->dv()[1] / 10.0;
-    accel.linear_acceleration.z = sensor->dv()[2] / 10.0;
-    publisher->publish(accel);
+    
+    sensor_msgs::msg::Imu::SharedPtr imu = std::make_shared<sensor_msgs::msg::Imu>();
+    imu->header.stamp = getStampMsgFromSec(io->currentTime());
+    imu->header.frame_id = sensor->name();
+    imu->linear_acceleration.x = sensor->dv()[0] / 10.0;
+    imu->linear_acceleration.y = sensor->dv()[1] / 10.0;
+    imu->linear_acceleration.z = sensor->dv()[2] / 10.0;
+
+    threadPoolForPublishing.start(
+        [publisher, imu]{ publisher->publish(*imu); });
 }
 
 
 void BodyROS2Item::updateVisionSensor(
-    Camera *sensor,
-    image_transport::Publisher & publisher)
+    Camera* sensor,
+    image_transport::Publisher publisher)
 {
     if (!sensor->on()) {
         return;
     }
 
-    sensor_msgs::msg::Image vision;
-    vision.header.stamp = getStampMsgFromSec(io->currentTime());
-    vision.header.frame_id = sensor->name();
-    vision.height = sensor->image().height();
-    vision.width = sensor->image().width();
+    sensor_msgs::msg::Image::SharedPtr image = std::make_shared<sensor_msgs::msg::Image>();
+    image->header.stamp = getStampMsgFromSec(io->currentTime());
+    image->header.frame_id = sensor->name();
+    image->height = sensor->image().height();
+    image->width = sensor->image().width();
     if (sensor->image().numComponents() == 3)
-        vision.encoding = "rgb8";
+        image->encoding = "rgb8";
     else if (sensor->image().numComponents() == 1)
-        vision.encoding = "mono8";
+        image->encoding = "mono8";
     else {
         RCLCPP_WARN(rosNode->get_logger(),
                     "unsupported image component number: %i",
                     sensor->image().numComponents());
     }
-    vision.is_bigendian = 0;
-    vision.step = sensor->image().width() * sensor->image().numComponents();
-    vision.data.resize(vision.step * vision.height);
-    std::memcpy(&(vision.data[0]),
+    image->is_bigendian = 0;
+    image->step = sensor->image().width() * sensor->image().numComponents();
+    image->data.resize(image->step * image->height);
+    std::memcpy(&(image->data[0]),
                 &(sensor->image().pixels()[0]),
-                vision.step * vision.height);
-    publisher.publish(vision);
+                image->step * image->height);
+
+    threadPoolForPublishing.start(
+        [publisher, image]{ publisher.publish(image); });
 }
 
 
 void BodyROS2Item::updateRangeVisionSensor(
-    RangeCamera *sensor,
+    RangeCamera* sensor,
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher)
 {
     if (!sensor->on()) {
         return;
     }
-    sensor_msgs::msg::PointCloud2 range;
-    range.header.stamp = getStampMsgFromSec(io->currentTime());
-    range.header.frame_id = sensor->name();
-    range.width = sensor->resolutionX();
-    range.height = sensor->resolutionY();
-    range.is_bigendian = false;
-    range.is_dense = true;
-    range.row_step = range.point_step * range.width;
+
+    sensor_msgs::msg::PointCloud2::SharedPtr pointCloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
+    pointCloud->header.stamp = getStampMsgFromSec(io->currentTime());
+    pointCloud->header.frame_id = sensor->name();
+    pointCloud->width = sensor->resolutionX();
+    pointCloud->height = sensor->resolutionY();
+    pointCloud->is_bigendian = false;
+    pointCloud->is_dense = true;
+    pointCloud->row_step = pointCloud->point_step * pointCloud->width;
     if (sensor->imageType() == cnoid::Camera::COLOR_IMAGE) {
-        range.fields.resize(6);
-        range.fields[3].name = "rgb";
-        range.fields[3].offset = 12;
-        range.fields[3].count = 1;
-        range.fields[3].datatype = sensor_msgs::msg::PointField::FLOAT32;
+        pointCloud->fields.resize(6);
+        pointCloud->fields[3].name = "rgb";
+        pointCloud->fields[3].offset = 12;
+        pointCloud->fields[3].count = 1;
+        pointCloud->fields[3].datatype = sensor_msgs::msg::PointField::FLOAT32;
         /*
-          range.fields[3].name = "r";
-          range.fields[3].offset = 12;
-          range.fields[3].datatype = sensor_msgs::PointField::UINT8;
-          range.fields[3].count = 1;
-          range.fields[4].name = "g";
-          range.fields[4].offset = 13;
-          range.fields[4].datatype = sensor_msgs::PointField::UINT8;
-          range.fields[4].count = 1;
-          range.fields[5].name = "b";
-          range.fields[5].offset = 14;
-          range.fields[5].datatype = sensor_msgs::PointField::UINT8;
-          range.fields[5].count = 1;
+          pointCloud->fields[3].name = "r";
+          pointCloud->fields[3].offset = 12;
+          pointCloud->fields[3].datatype = sensor_msgs::PointField::UINT8;
+          pointCloud->fields[3].count = 1;
+          pointCloud->fields[4].name = "g";
+          pointCloud->fields[4].offset = 13;
+          pointCloud->fields[4].datatype = sensor_msgs::PointField::UINT8;
+          pointCloud->fields[4].count = 1;
+          pointCloud->fields[5].name = "b";
+          pointCloud->fields[5].offset = 14;
+          pointCloud->fields[5].datatype = sensor_msgs::PointField::UINT8;
+          pointCloud->fields[5].count = 1;
         */
-        range.point_step = 16;
+        pointCloud->point_step = 16;
     } else {
-        range.fields.resize(3);
-        range.point_step = 12;
+        pointCloud->fields.resize(3);
+        pointCloud->point_step = 12;
     }
-    range.fields[0].name = "x";
-    range.fields[0].offset = 0;
-    range.fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
-    range.fields[0].count = 4;
-    range.fields[1].name = "y";
-    range.fields[1].offset = 4;
-    range.fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
-    range.fields[1].count = 4;
-    range.fields[2].name = "z";
-    range.fields[2].offset = 8;
-    range.fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
-    range.fields[2].count = 4;
+    pointCloud->fields[0].name = "x";
+    pointCloud->fields[0].offset = 0;
+    pointCloud->fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    pointCloud->fields[0].count = 4;
+    pointCloud->fields[1].name = "y";
+    pointCloud->fields[1].offset = 4;
+    pointCloud->fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    pointCloud->fields[1].count = 4;
+    pointCloud->fields[2].name = "z";
+    pointCloud->fields[2].offset = 8;
+    pointCloud->fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    pointCloud->fields[2].count = 4;
     const std::vector<Vector3f> &points = sensor->constPoints();
     const unsigned char *pixels = sensor->constImage().pixels();
-    range.data.resize(points.size() * range.point_step);
-    unsigned char *dst = (unsigned char *) &(range.data[0]);
+    pointCloud->data.resize(points.size() * pointCloud->point_step);
+    unsigned char *dst = (unsigned char *) &(pointCloud->data[0]);
 
     auto Ro = [&]() -> std::optional<Matrix3f> {
         if(sensor->opticalFrameRotation().isIdentity()){
@@ -589,55 +602,62 @@ void BodyROS2Item::updateRangeVisionSensor(
             dst[12] = *pixels++;
             dst[15] = 0;
         }
-        dst += range.point_step;
+        dst += pointCloud->point_step;
     }
-    publisher->publish(range);
+
+    threadPoolForPublishing.start(
+        [publisher, pointCloud]{ publisher->publish(*pointCloud); });
 }
 
 
 void BodyROS2Item::updateRangeSensor(
-    RangeSensor *sensor,
+    RangeSensor* sensor,
     rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher)
 {
     if (!sensor->on()) {
         return;
     }
-    sensor_msgs::msg::LaserScan range;
-    range.header.stamp = getStampMsgFromSec(io->currentTime());
-    range.header.frame_id = sensor->name();
-    range.range_max = sensor->maxDistance();
-    range.range_min = sensor->minDistance();
+    
+    sensor_msgs::msg::LaserScan::SharedPtr laserScan = std::make_shared<sensor_msgs::msg::LaserScan>();
+    laserScan->header.stamp = getStampMsgFromSec(io->currentTime());
+    laserScan->header.frame_id = sensor->name();
+    laserScan->range_max = sensor->maxDistance();
+    laserScan->range_min = sensor->minDistance();
     if (sensor->yawRange() == 0.0) {
-        range.angle_max = sensor->pitchRange() / 2.0;
-        range.angle_min = -sensor->pitchRange() / 2.0;
-        range.angle_increment = sensor->pitchStep();
+        laserScan->angle_max = sensor->pitchRange() / 2.0;
+        laserScan->angle_min = -sensor->pitchRange() / 2.0;
+        laserScan->angle_increment = sensor->pitchStep();
     } else {
-        range.angle_max = sensor->yawRange() / 2.0;
-        range.angle_min = -sensor->yawRange() / 2.0;
-        range.angle_increment = sensor->yawStep();
+        laserScan->angle_max = sensor->yawRange() / 2.0;
+        laserScan->angle_min = -sensor->yawRange() / 2.0;
+        laserScan->angle_increment = sensor->yawStep();
     }
-    range.ranges.resize(sensor->rangeData().size());
-    //range.intensities.resize(sensor->rangeData().size());
+    laserScan->ranges.resize(sensor->rangeData().size());
+    //laserScan->intensities.resize(sensor->rangeData().size());
     // for (size_t j = 0; j < sensor->rangeData().size(); ++j) {
     for (size_t j = 0; j < sensor->numYawSamples(); ++j) {
-        range.ranges[j] = sensor->rangeData()[j];
-        //range.intensities[j] = -900000;
+        laserScan->ranges[j] = sensor->rangeData()[j];
+        //laserScan->intensities[j] = -900000;
     }
-    publisher->publish(range);
+
+    threadPoolForPublishing.start(
+        [publisher, laserScan]{ publisher->publish(*laserScan); });
 }
 
 
 void BodyROS2Item::update3DRangeSensor(
-    RangeSensor *sensor,
+    RangeSensor* sensor,
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher)
 {
     if (!sensor->on()) {
         return;
     }
-    sensor_msgs::msg::PointCloud2 range;
+
+    sensor_msgs::msg::PointCloud2::SharedPtr pointCloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
+    
     // Header Info
-    range.header.stamp = getStampMsgFromSec(io->currentTime());
-    range.header.frame_id = sensor->name();
+    pointCloud->header.stamp = getStampMsgFromSec(io->currentTime());
+    pointCloud->header.frame_id = sensor->name();
 
     // Calculate Point Cloud data
     const int numPitchSamples = sensor->numPitchSamples();
@@ -645,26 +665,26 @@ void BodyROS2Item::update3DRangeSensor(
     const int numYawSamples = sensor->numYawSamples();
     const double yawStep = sensor->yawStep();
 
-    range.height = numPitchSamples;
-    range.width = numYawSamples;
-    range.point_step = 12;
-    range.row_step = range.width * range.point_step;
-    range.fields.resize(3);
-    range.fields[0].name = "x";
-    range.fields[0].offset = 0;
-    range.fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
-    range.fields[0].count = 4;
-    range.fields[1].name = "y";
-    range.fields[1].offset = 4;
-    range.fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
-    range.fields[1].count = 4;
-    range.fields[2].name = "z";
-    range.fields[2].offset = 8;
-    range.fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
-    range.fields[2].count = 4;
+    pointCloud->height = numPitchSamples;
+    pointCloud->width = numYawSamples;
+    pointCloud->point_step = 12;
+    pointCloud->row_step = pointCloud->width * pointCloud->point_step;
+    pointCloud->fields.resize(3);
+    pointCloud->fields[0].name = "x";
+    pointCloud->fields[0].offset = 0;
+    pointCloud->fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    pointCloud->fields[0].count = 4;
+    pointCloud->fields[1].name = "y";
+    pointCloud->fields[1].offset = 4;
+    pointCloud->fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    pointCloud->fields[1].count = 4;
+    pointCloud->fields[2].name = "z";
+    pointCloud->fields[2].offset = 8;
+    pointCloud->fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
+    pointCloud->fields[2].count = 4;
 
-    range.data.resize(numPitchSamples * numYawSamples * range.point_step);
-    unsigned char* dst = (unsigned char*)&(range.data[0]);
+    pointCloud->data.resize(numPitchSamples * numYawSamples * pointCloud->point_step);
+    unsigned char* dst = (unsigned char*)&(pointCloud->data[0]);
 
     auto Ro = [&]() -> std::optional<Matrix3f> {
         if(sensor->opticalFrameRotation().isIdentity()){
@@ -694,11 +714,12 @@ void BodyROS2Item::update3DRangeSensor(
             std::memcpy(&dst[0], &p.x(), 4);
             std::memcpy(&dst[4], &p.y(), 4);
             std::memcpy(&dst[8], &p.z(), 4);
-            dst += range.point_step;
+            dst += pointCloud->point_step;
         }
     }
 
-    publisher->publish(range);
+    threadPoolForPublishing.start(
+        [publisher, pointCloud]{ publisher->publish(*pointCloud); });
 }
 
 
@@ -709,7 +730,7 @@ void BodyROS2Item::output() {}
 void BodyROS2Item::switchDevice(
     std_srvs::srv::SetBool::Request::ConstSharedPtr request,
     std_srvs::srv::SetBool::Response::SharedPtr response,
-    Device *sensor)
+    Device* sensor)
 {
     sensor->on(request->data);
     response->success = (request->data == sensor->on());

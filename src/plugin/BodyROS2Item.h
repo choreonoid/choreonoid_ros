@@ -10,6 +10,7 @@
 #include <cnoid/DeviceList>
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
+#include <cnoid/ThreadPool>
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -112,6 +113,8 @@ private:
     std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor;
     std::thread executorThread;
 
+    ThreadPool threadPoolForPublishing;
+
     std::string bodyName;
 
     std::vector<rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr>
@@ -121,7 +124,7 @@ private:
     std::vector<rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr>
         accelSensorPublishers;
 
-    std::shared_ptr<image_transport::ImageTransport> imageTransport = nullptr;
+    std::shared_ptr<image_transport::ImageTransport> imageTransport;
     std::vector<image_transport::Publisher> visionSensorPublishers;
 
     std::vector<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
@@ -144,31 +147,30 @@ private:
     void finalizeRosNode();
     
     void updateForceSensor(
-        ForceSensor *sensor,
-        rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr
-            publisher);
+        ForceSensor* sensor,
+        rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr publisher);
     void updateRateGyroSensor(
-        RateGyroSensor *sensor,
+        RateGyroSensor* sensor,
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
     void updateAccelSensor(
-        AccelerationSensor *sensor,
+        AccelerationSensor* sensor,
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher);
     void updateVisionSensor(
-        Camera *sensor,
-        image_transport::Publisher & publisher);
+        Camera* sensor,
+        image_transport::Publisher publisher);
     void updateRangeVisionSensor(
-        RangeCamera *sensor,
+        RangeCamera* sensor,
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher);
     void updateRangeSensor(
-        RangeSensor *sensor,
+        RangeSensor* sensor,
         rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher);
     void update3DRangeSensor(
-        RangeSensor *sensor,
+        RangeSensor* sensor,
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher);
 
     void switchDevice(std_srvs::srv::SetBool::Request::ConstSharedPtr request,
                       std_srvs::srv::SetBool::Response::SharedPtr response,
-                      Device *sensor);
+                      Device* sensor);
     builtin_interfaces::msg::Time getStampMsgFromSec(double sec);
 
     std::string getROS2Name(const std::string &name) const;

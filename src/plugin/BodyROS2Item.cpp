@@ -443,7 +443,7 @@ void BodyROS2Item::updateRateGyroSensor(
     if (!sensor->on()) {
         return;
     }
-    sensor_msgs::msg::Imu::SharedPtr imu = std::shared_ptr<sensor_msgs::msg::Imu>();
+    sensor_msgs::msg::Imu::SharedPtr imu = std::make_shared<sensor_msgs::msg::Imu>();
     imu->header.stamp = getStampMsgFromSec(io->currentTime());
     imu->header.frame_id = sensor->name();
     imu->angular_velocity.x = sensor->w()[0];

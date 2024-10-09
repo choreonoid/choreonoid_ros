@@ -244,10 +244,10 @@ void BodyROSItem::createSensors(BodyPtr body)
         sensor->sigStateChanged().connect([this, sensor, publisher]() {
             updateImu(sensor, publisher);
         });
-        accelSensorPublishers.push_back(publisher);
+        imuPublishers.push_back(publisher);
         boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
             = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
-        accelSensorSwitchServers.push_back(
+        imuSwitchServers.push_back(
             rosNode->advertiseService(name + "/set_enabled", requestCallback));
         ROS_INFO("Create IMU %s", sensor->name().c_str());
     }

@@ -19,8 +19,10 @@
 
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>image_transport</depend>
+  <depend>image_transport_plugins</depend>
 
   <depend condition="$ROS_VERSION == 1">pluginlib</depend>
   <depend condition="$ROS_VERSION == 1">angles</depend>

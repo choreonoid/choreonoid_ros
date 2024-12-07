@@ -34,6 +34,25 @@ find_package(sensor_msgs REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(choreonoid REQUIRED)
 
+set(CHOREONOID_ROS_CMAKE_CONFIG_SUBDIR share/choreonoid_ros/cmake) # ROS compliant
+
+if(WIN32)
+  set(DEFAULT_INSTALL_SDK OFF)
+  set(DEFAULT_INSTALL_RUNTIME_DEPENDENCIES ON)
+else()
+  set(DEFAULT_INSTALL_SDK ON)
+  set(DEFAULT_INSTALL_RUNTIME_DEPENDENCIES OFF)
+endif()
+
+option(INSTALL_RUNTIME_DEPENDENCIES "Installing the runtimes of external libraries" ${DEFAULT_INSTALL_RUNTIME_DEPENDENCIES})
+option(INSTALL_SDK "Installing SDK files such as header files" ${DEFAULT_INSTALL_SDK})
+set(CHOREONOID_ROS_INSTALL_SDK ${INSTALL_SDK})
+set(CHOREONOID_ROS_SDK_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_HEADER_SUBDIR})
+set(CHOREONOID_ROS_SDK_LIBRARY_DIRS
+  ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_LIB_SUBDIR} ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_PLUGIN_SUBDIR})
+
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:CNOID_DEBUG>)
+
 if(DEFINED ENV{ROS_VERSION})
   if($ENV{ROS_VERSION} EQUAL 1)
     catkin_package(SKIP_CMAKE_CONFIG_GENERATION SKIP_PKG_CONFIG_GENERATION)
@@ -48,8 +67,19 @@ else()
   add_compile_options(-std=c++14)
 endif()
 
+if(NOT PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
+  include_directories(${PROJECT_BINARY_DIR})
+  include_directories(${PROJECT_BINARY_DIR}/include)
+endif()
+include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
+link_directories(${PROJECT_BINARY_DIR}/lib)
+link_directories(${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR})
+
 
 add_subdirectory(src)
+add_subdirectory(include)
 
 if(DEFINED ENV{ROS_VERSION})
   if($ENV{ROS_VERSION} EQUAL 1)
@@ -73,3 +103,8 @@ if(DEFINED ENV{ROS_VERSION})
     )
   endif()
 endif()
+
+if(INSTALL_SDK)
+  add_subdirectory(cmake)
+endif()
+add_subdirectory(misc)

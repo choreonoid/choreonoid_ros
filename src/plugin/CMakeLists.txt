@@ -4,15 +4,22 @@ choreonoid_make_gettext_mo_files(${target} mofiles)
 
 if(DEFINED ENV{ROS_VERSION})
   if($ENV{ROS_VERSION} EQUAL 1)
-    choreonoid_add_plugin(${target}
+    set(sources
       ROSPlugin.cpp
       WorldROSItem.cpp
       BodyROSItem.cpp
       ROSControlItem.cpp
       RobotHWSim.h
       deprecated/BodyPublisherItem.cpp
-      ${mofiles}
     )
+
+    set(headers
+      WorldROSItem.h
+      BodyROSItem.h
+      exportdecl.h
+    )
+
+    choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 
     target_link_libraries(${target}
       PUBLIC
@@ -46,12 +53,19 @@ if(DEFINED ENV{ROS_VERSION})
       add_subdirectory(pybind11)
     endif()
   elseif($ENV{ROS_VERSION} EQUAL 2)
-    choreonoid_add_plugin(${target}
+    set(sources
       ROS2Plugin.cpp
       WorldROS2Item.cpp
       BodyROS2Item.cpp
-      ${mofiles}
     )
+
+    set(headers
+      WorldROS2Item.h
+      BodyROS2Item.h
+      exportdecl.h
+    )
+
+    choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 
     ament_target_dependencies(${target} PUBLIC
       "rclcpp"

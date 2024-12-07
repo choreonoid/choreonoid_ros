@@ -36,3 +36,11 @@ msgstr "最大パブリッシュレート"
 #: BodyROSItem.cpp:17
 msgid "BodyROSItem"
 msgstr "ボディROSアイテム"
+
+#: WorldROS2Item.cpp:60
+msgid "WorldROS2Item"
+msgstr "ワールドROS2アイテム"
+
+#: BodyROS2Item.cpp:50
+msgid "BodyROS2Item"
+msgstr "ボディROS2アイテム"

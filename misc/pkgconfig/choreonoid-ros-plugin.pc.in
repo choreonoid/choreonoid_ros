@@ -1,0 +1,18 @@
+# pkg-config source file
+
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/@CHOREONOID_HEADER_SUBDIR@
+subdir=@CHOREONOID_VERSION_SUBDIR@
+sharedir=@CHOREONOID_ROS_SHARE_DIR@
+plugindir=${exec_prefix}/@CHOREONOID_PLUGIN_SUBDIR@
+simplecontrollerdir=${plugindir}/simplecontroller
+customizerdir=${plugindir}/simplecontroller/customizer
+
+Name: choreonoid-ros-plugin
+Description: Choreonoid ROS plugin
+Version: @CHOREONOID_VERSION_STRING@
+Requires: choreonoid-body-plugin = @CHOREONOID_VERSION_STRING@
+Conflicts:
+Libs: -lCnoidROSPlugin

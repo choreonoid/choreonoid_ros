@@ -5,6 +5,7 @@
 #include <cnoid/Link>
 #include <cnoid/MessageView>
 #include <cnoid/PutPropertyFunction>
+#include <cnoid/Config>
 
 #include <geometry_msgs/msg/wrench_stamped.hpp>
 #include <sensor_msgs/image_encodings.hpp>
@@ -716,6 +717,23 @@ void BodyROS2Item::updateRangeSensor(
     dispatch(threadPoolForPublishing, [publisher, laserScan]{ publisher->publish(*laserScan); });
 }
 
+static inline void addPointToPointCloud
+(double yawAngle, double pitchAngle, double distance, const std::optional<Matrix3f>& Ro, unsigned char* dst)
+{
+    double cosPitch = std::cos(pitchAngle);
+    Vector3f p;
+    p.x() = distance *  cosPitch * std::sin(-yawAngle);
+    p.y() = distance * std::sin(pitchAngle);
+    p.z() = -distance * cosPitch * std::cos(yawAngle);
+    if(Ro){
+        p = (*Ro) * p;
+    }
+    std::memcpy(&dst[0], &p.x(), 4);
+    std::memcpy(&dst[4], &p.y(), 4);
+    std::memcpy(&dst[8], &p.z(), 4);
+}
+    
+
 
 void BodyROS2Item::update3DRangeSensor(
     RangeSensor* sensor,
@@ -726,21 +744,12 @@ void BodyROS2Item::update3DRangeSensor(
     }
 
     auto pointCloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
-    
+    constexpr int pointStep = 12;
+
     // Header Info
     pointCloud->header.stamp = getStampMsgFromSec(io->currentTime());
     pointCloud->header.frame_id = sensor->name();
-
-    // Calculate Point Cloud data
-    const int numPitchSamples = sensor->numPitchSamples();
-    const double pitchStep = sensor->pitchStep();
-    const int numYawSamples = sensor->numYawSamples();
-    const double yawStep = sensor->yawStep();
-
-    pointCloud->height = numPitchSamples;
-    pointCloud->width = numYawSamples;
-    pointCloud->point_step = 12;
-    pointCloud->row_step = pointCloud->width * pointCloud->point_step;
+    pointCloud->height = 1;
     pointCloud->fields.resize(3);
     pointCloud->fields[0].name = "x";
     pointCloud->fields[0].offset = 0;
@@ -754,37 +763,64 @@ void BodyROS2Item::update3DRangeSensor(
     pointCloud->fields[2].offset = 8;
     pointCloud->fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
     pointCloud->fields[2].count = 4;
+    pointCloud->is_bigendian = false;
+    pointCloud->point_step = pointStep;
+    pointCloud->is_dense = true;
 
-    pointCloud->data.resize(numPitchSamples * numYawSamples * pointCloud->point_step);
-    unsigned char* dst = (unsigned char*)&(pointCloud->data[0]);
+    const auto& rangeData = sensor->constRangeData();
+    auto& pointCloudData = pointCloud->data;
+    pointCloudData.resize(rangeData.size() * pointCloud->point_step);
+    unsigned char* dst = (unsigned char*)&(pointCloudData[0]);
 
     std::optional<Matrix3f> Ro;
     if(!sensor->opticalFrameRotation().isIdentity()){
         Ro = sensor->opticalFrameRotation().cast<float>();
     }
 
-    for(int pitchIndex = 0; pitchIndex < numPitchSamples; ++pitchIndex){
-        const double pitchAngle = pitchIndex * pitchStep - sensor->pitchRange() / 2.0;
-        const double cosPitchAngle = cos(pitchAngle);
-        const double sinPitchAngle = sin(pitchAngle);
-        const int srctop = pitchIndex * numYawSamples;
+    int numPoints = 0;
+    double maxDistance = sensor->maxDistance();
 
-        for (int yawIndex = 0; yawIndex < numYawSamples; ++yawIndex) {
-            const double distance = sensor->rangeData()[srctop + yawIndex];
-            const double yawAngle = yawIndex * yawStep - sensor->yawRange() / 2.0;
-            Vector3f p;
-            p.x() = distance * cosPitchAngle * sin(-yawAngle);
-            p.y() = distance * sin(pitchAngle);
-            p.z() = - distance * cosPitchAngle * cos(-yawAngle);
-            if (Ro) {
-                p = Ro.value() * p;
-            }
-            std::memcpy(&dst[0], &p.x(), 4);
-            std::memcpy(&dst[4], &p.y(), 4);
-            std::memcpy(&dst[8], &p.z(), 4);
-            dst += pointCloud->point_step;
+#if CNOID_VERSION >= 0x020300
+    for(int i=0; i < rangeData.size(); ++i){
+        double distance = rangeData[i];
+        if(distance <= maxDistance){
+            Vector2 angles = sensor->getSphericalAngle(i);
+            double yawAngle = angles[0];
+            double pitchAngle = angles[1];
+            addPointToPointCloud(yawAngle, pitchAngle, distance, Ro, dst);
+            dst += pointStep;
+            ++numPoints;
         }
     }
+#else
+    const int numPitchSamples = sensor->numPitchSamples();
+    const double minPitchAngle = -sensor->pitchRange() / 2.0;
+    const double pitchStep = sensor->pitchStep();
+    const int numYawSamples = sensor->numYawSamples();
+    const double minYawAngle = -sensor->yawRange() / 2.0;
+    const double yawStep = sensor->yawStep();
+    
+    for(int pitchIndex = 0; pitchIndex < numPitchSamples; ++pitchIndex){
+        const double pitchAngle = pitchIndex * pitchStep + minPitchAngle;
+        const double cosPitchAngle = cos(pitchAngle);
+        const double sinPitchAngle = sin(pitchAngle);
+        const int pitchTopIndex = pitchIndex * numYawSamples;
+
+        for (int yawIndex = 0; yawIndex < numYawSamples; ++yawIndex) {
+            const double distance = rangeData[pitchTopIndex + yawIndex];
+            if(distance <= maxDistance){
+                const double yawAngle = yawIndex * yawStep + minYawAngle;
+                addPointToPointCloud(yawAngle, pitchAngle, distance, Ro, dst);
+                dst += pointStep;
+                ++numPoints;
+            }
+        }
+    }
+#endif
+
+    pointCloudData.resize(numPoints * pointStep);
+    pointCloud->width = numPoints;
+    pointCloud->row_step = pointCloudData.size();
 
     dispatch(threadPoolForPublishing, [publisher, pointCloud]{ publisher->publish(*pointCloud); });
 }

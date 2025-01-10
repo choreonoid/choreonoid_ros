@@ -408,7 +408,7 @@ void BodyROS2Item::createSensors(BodyPtr body)
     rangeSensorPcSwitchServers.clear();
     rangeSensorPcSwitchServers.reserve(rangeSensors_.size());
     for (auto sensor : rangeSensors_) {
-        if (sensor->numPitchSamples() > 1) {
+        if (sensor->pitchRange() > 0.0){
             std::string name = getROS2Name(sensor->name());
             auto pc_publisher = rosNode->create_publisher<
                 sensor_msgs::msg::PointCloud2>(name + "/point_cloud", 1);
@@ -704,12 +704,13 @@ void BodyROS2Item::updateRangeSensor(
         laserScan->angle_min = -sensor->yawRange() / 2.0;
         laserScan->angle_increment = sensor->yawStep();
     }
-    laserScan->ranges.resize(sensor->rangeData().size());
-    //laserScan->intensities.resize(sensor->rangeData().size());
-    // for (size_t j = 0; j < sensor->rangeData().size(); ++j) {
-    for (size_t j = 0; j < sensor->numYawSamples(); ++j) {
-        laserScan->ranges[j] = sensor->rangeData()[j];
-        //laserScan->intensities[j] = -900000;
+
+    const auto& rangeData = sensor->constRangeData();
+    laserScan->ranges.resize(rangeData.size());
+    //laserScan->intensities.resize(rangeData.size());
+    for (size_t i = 0; i < rangeData.size(); ++i) {
+        laserScan->ranges[i] = rangeData[i];
+        //laserScan->intensities[i] = -900000;
     }
 
     dispatch(threadPoolForPublishing, [publisher, laserScan]{ publisher->publish(*laserScan); });

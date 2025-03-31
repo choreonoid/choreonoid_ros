@@ -70,13 +70,13 @@ if(DEFINED ENV{ROS_VERSION})
     )
 
     add_library(choreonoid_ros2_control SHARED SystemInterfaceCnoid.cpp)
-    target_link_libraries(choreonoid_ros2_control Choreonoid::CnoidBody Choreonoid::CnoidBase)
-    ament_target_dependencies(choreonoid_ros2_control
-    # controller_manager
-    hardware_interface
-    pluginlib
-    rclcpp
-    rclcpp_lifecycle
+    target_link_libraries(choreonoid_ros2_control PUBLIC Choreonoid::CnoidBody Choreonoid::CnoidBase)
+    ament_target_dependencies(choreonoid_ros2_control PUBLIC
+      controller_manager
+      hardware_interface
+      pluginlib
+      rclcpp
+      rclcpp_lifecycle
     )
 
     install(TARGETS choreonoid_ros2_control

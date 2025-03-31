@@ -140,7 +140,7 @@ bool ROS2ControlItem::initialize(ControllerIO* io)
     }
 
     // initialize SystemInterfaceCnoid
-    std::unique_ptr<SystemInterfaceCnoid> interface(new SystemInterfaceCnoid(io));
+    std::unique_ptr<SystemInterfaceCnoid> interface(new SystemInterfaceCnoid(io, node));
     resourceManager->import_component(std::move(interface), controlHardwareInfo[0]);
     
     // activate the corresponding HardwareComponent

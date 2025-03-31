@@ -12,6 +12,7 @@
 
 using hardware_interface::CallbackReturn;
 using hardware_interface::CommandInterface;
+using hardware_interface::ComponentInfo;
 using hardware_interface::HardwareInfo;
 using hardware_interface::return_type;
 using hardware_interface::StateInterface;
@@ -26,7 +27,7 @@ public:
 
   SystemInterfaceCnoid();
 
-  explicit SystemInterfaceCnoid(cnoid::ControllerIO* io);
+  explicit SystemInterfaceCnoid(cnoid::ControllerIO* io, std::shared_ptr<rclcpp::Node> node);
 
   CallbackReturn on_init(const HardwareInfo& info) override;
 
@@ -62,11 +63,31 @@ private:
         double velocity;
         double effort;
     };
+    struct Gain
+    {
+        double p;
+        double d;
+    };
+
+    enum ControlMode {
+        POSITION,
+        VELOCITY,
+        EFFORT,
+        POSITION_PD,
+        VELOCITY_PD,
+        UNDEFINED
+    };
+
+
 
     cnoid::ControllerIO* io;
 
+    std::shared_ptr<rclcpp::Node> node = nullptr;
+
     std::vector<State> states;
     std::vector<double> commands;
+    std::vector<ControlMode> controlTypes;
+    std::vector<Gain> gains;
 };
 
 }  // namespace cnoid

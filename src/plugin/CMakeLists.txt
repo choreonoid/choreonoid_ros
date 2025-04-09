@@ -16,10 +16,6 @@ if(DEFINED ENV{ROS_VERSION})
 
     target_link_libraries(${target}
       PUBLIC
-      ${roscpp_LIBRARIES}
-      ${std_msgs_LIBRARIES}
-      ${sensor_msgs_LIBRARIES}
-      ${image_transport_LIBRARIES}
       ${catkin_LIBRARIES}
       Choreonoid::CnoidBodyPlugin
     )
@@ -45,6 +41,7 @@ if(DEFINED ENV{ROS_VERSION})
     if(CHOREONOID_ENABLE_PYTHON)
       add_subdirectory(pybind11)
     endif()
+
   elseif($ENV{ROS_VERSION} EQUAL 2)
     choreonoid_add_plugin(${target}
       ROS2Plugin.cpp

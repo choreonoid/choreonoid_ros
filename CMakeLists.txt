@@ -16,24 +16,29 @@ if(DEFINED ENV{ROS_VERSION})
       joint_limits_interface
       transmission_interface
       urdf
+      controller_manager
+      hardware_interface
+      pluginlib
+      std_msgs
+      std_srvs
+      sensor_msgs
+      image_transport
     )
   elseif ($ENV{ROS_VERSION} EQUAL 2)
-    find_package(
-      ament_cmake REQUIRED COMPONENTS
-      rclcpp
-      rclcpp_lifecycle
-      ament_index_cpp
-    )
+    find_package(ament_cmake REQUIRED)
+    find_package(rclcpp REQUIRED)
+    find_package(rclcpp_lifecycle REQUIRED)
+    find_package(ament_index_cpp REQUIRED)
+    find_package(controller_manager REQUIRED)
+    find_package(hardware_interface REQUIRED)
+    find_package(pluginlib REQUIRED)
+    find_package(std_msgs REQUIRED)
+    find_package(std_srvs REQUIRED)
+    find_package(sensor_msgs REQUIRED)
+    find_package(image_transport REQUIRED)
   endif()
 endif()
 
-find_package(controller_manager REQUIRED)
-find_package(hardware_interface REQUIRED)
-find_package(pluginlib REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(image_transport REQUIRED)
 find_package(choreonoid REQUIRED)
 
 if(DEFINED ENV{ROS_VERSION})

@@ -23,15 +23,21 @@
   <depend>sensor_msgs</depend>
   <depend>image_transport</depend>
   <depend>image_transport_plugins</depend>
+  <depend>pluginlib</depend>
 
-  <depend condition="$ROS_VERSION == 1">pluginlib</depend>
+  <!-- for ros_control and ros2_control -->
+  <depend >controller_manager</depend>
+  <depend>hardware_interface</depend>
   <depend condition="$ROS_VERSION == 1">angles</depend>
-  <depend condition="$ROS_VERSION == 1">controller_manager</depend>
-  <depend condition="$ROS_VERSION == 1">hardware_interface</depend>
   <depend condition="$ROS_VERSION == 1">joint_limits_interface</depend>
   <depend condition="$ROS_VERSION == 1">transmission_interface</depend>
   <depend condition="$ROS_VERSION == 1">urdf</depend>
+
   <depend condition="$ROS_VERSION == 2">ament_index_cpp</depend>
+  <depend condition="$ROS_VERSION == 2">controller_manager</depend>
+  <depend condition="$ROS_VERSION == 2">rclcpp_lifecycle</depend>
+  <depend condition="$ROS_VERSION == 2">realtime_tools</depend>
+  <depend condition="$ROS_VERSION == 2">ros2_control</depend>
 
   <export>
     <build_type condition="$ROS_VERSION == 1">cmake</build_type>

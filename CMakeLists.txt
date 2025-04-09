@@ -12,10 +12,7 @@ if(DEFINED ENV{ROS_VERSION})
     find_package(
       catkin REQUIRED COMPONENTS
       roscpp
-      pluginlib
       angles
-      controller_manager
-      hardware_interface
       joint_limits_interface
       transmission_interface
       urdf
@@ -23,11 +20,16 @@ if(DEFINED ENV{ROS_VERSION})
   elseif ($ENV{ROS_VERSION} EQUAL 2)
     find_package(
       ament_cmake REQUIRED COMPONENTS
-      rclcpp ament_index_cpp
+      rclcpp
+      rclcpp_lifecycle
+      ament_index_cpp
     )
   endif()
 endif()
 
+find_package(controller_manager REQUIRED)
+find_package(hardware_interface REQUIRED)
+find_package(pluginlib REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -65,11 +67,13 @@ if(DEFINED ENV{ROS_VERSION})
         )
     endif()
   elseif($ENV{ROS_VERSION} EQUAL 2)
-    ament_package()
+    pluginlib_export_plugin_description_file(hardware_interface choreonoid_ros2_control.xml)
 
     install(DIRECTORY
       launch/ros2
       DESTINATION share/${PROJECT_NAME}/launch
     )
+
+    ament_package()
   endif()
 endif()

@@ -50,6 +50,8 @@ if(DEFINED ENV{ROS_VERSION})
       ROS2Plugin.cpp
       WorldROS2Item.cpp
       BodyROS2Item.cpp
+      ROS2ControlItem.cpp
+      SystemInterfaceCnoid.cpp
       ${mofiles}
     )
 
@@ -59,11 +61,32 @@ if(DEFINED ENV{ROS_VERSION})
       "std_srvs"
       "sensor_msgs"
       "image_transport"
+      "hardware_interface"
+      "controller_manager"
     )
 
     target_link_libraries(${target} PUBLIC
       Choreonoid::CnoidBodyPlugin
     )
+
+    add_library(choreonoid_ros2_control SHARED SystemInterfaceCnoid.cpp)
+    target_link_libraries(choreonoid_ros2_control Choreonoid::CnoidBody Choreonoid::CnoidBase)
+    ament_target_dependencies(choreonoid_ros2_control
+    # controller_manager
+    hardware_interface
+    pluginlib
+    rclcpp
+    rclcpp_lifecycle
+    )
+
+    install(TARGETS choreonoid_ros2_control
+      RUNTIME DESTINATION bin
+      LIBRARY DESTINATION lib
+      ARCHIVE DESTINATION lib
+    )
+
+    ament_export_libraries(choreonoid_ros2_control)
+    ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 
     if(CHOREONOID_ENABLE_PYTHON)
       #  add_subdirectory(pybind11)

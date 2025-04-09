@@ -1,0 +1,9 @@
+<library path="choreonoid_ros2_control">
+  <class name="choreonoid_ros2_control/SystemInterfaceCnoid"
+         type="cnoid::SystemInterfaceCnoid"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      The system interface of ros2_control framework for Choreonoid simulation.
+    </description>
+  </class>
+</library>

@@ -66,28 +66,5 @@ if(DEFINED ENV{ROS_VERSION})
       Choreonoid::CnoidBodyPlugin
     )
 
-    add_library(choreonoid_ros2_control SHARED SystemInterfaceCnoid.cpp)
-    target_link_libraries(choreonoid_ros2_control PUBLIC Choreonoid::CnoidBody Choreonoid::CnoidBase)
-    ament_target_dependencies(choreonoid_ros2_control PUBLIC
-      controller_manager
-      hardware_interface
-      pluginlib
-      rclcpp
-      rclcpp_lifecycle
-    )
-
-    install(TARGETS choreonoid_ros2_control
-      RUNTIME DESTINATION bin
-      LIBRARY DESTINATION lib
-      ARCHIVE DESTINATION lib
-    )
-
-    ament_export_libraries(choreonoid_ros2_control)
-    ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
-
-    if(CHOREONOID_ENABLE_PYTHON)
-      #  add_subdirectory(pybind11)
-    endif ()
-
   endif()
 endif()

@@ -6,7 +6,6 @@
 #include "Format.h"
 #include "gettext.h"
 
-#include <pluginlib/class_list_macros.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
 
 namespace cnoid {
@@ -292,5 +291,3 @@ return_type SystemInterfaceCnoid::write(
 }
 
 }  // namespace cnoid
-
-PLUGINLIB_EXPORT_CLASS(cnoid::SystemInterfaceCnoid, hardware_interface::SystemInterface)

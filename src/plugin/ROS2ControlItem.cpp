@@ -11,7 +11,6 @@
 #include <hardware_interface/component_parser.hpp>
 #include <hardware_interface/resource_manager.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
-#include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>

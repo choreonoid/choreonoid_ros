@@ -31,7 +31,6 @@ if(DEFINED ENV{ROS_VERSION})
     find_package(ament_index_cpp REQUIRED)
     find_package(controller_manager REQUIRED)
     find_package(hardware_interface REQUIRED)
-    find_package(pluginlib REQUIRED)
     find_package(std_msgs REQUIRED)
     find_package(std_srvs REQUIRED)
     find_package(sensor_msgs REQUIRED)
@@ -71,8 +70,8 @@ if(DEFINED ENV{ROS_VERSION})
           PATTERN "ros2" EXCLUDE
         )
     endif()
+
   elseif($ENV{ROS_VERSION} EQUAL 2)
-    pluginlib_export_plugin_description_file(hardware_interface choreonoid_ros2_control.xml)
 
     install(DIRECTORY
       launch/ros2

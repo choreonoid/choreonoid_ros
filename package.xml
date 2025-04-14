@@ -23,7 +23,6 @@
   <depend>sensor_msgs</depend>
   <depend>image_transport</depend>
   <depend>image_transport_plugins</depend>
-  <depend>pluginlib</depend>
 
   <!-- for ros_control and ros2_control -->
   <depend >controller_manager</depend>
@@ -32,6 +31,7 @@
   <depend condition="$ROS_VERSION == 1">joint_limits_interface</depend>
   <depend condition="$ROS_VERSION == 1">transmission_interface</depend>
   <depend condition="$ROS_VERSION == 1">urdf</depend>
+  <depend condition="$ROS_VERSION == 1">pluginlib</depend>
 
   <depend condition="$ROS_VERSION == 2">ament_index_cpp</depend>
   <depend condition="$ROS_VERSION == 2">controller_manager</depend>

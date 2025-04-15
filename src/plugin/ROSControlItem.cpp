@@ -92,7 +92,7 @@ bool ROSControlItem::initialize(ControllerIO* io)
 
     // Copy elements to the local arguments //
     this->io = io;
-    time = io->currentTime();
+    dt = timeStep();
 
     // ROS Initialize
     nodeHandle = ros::NodeHandle(nodeNamespace);
@@ -143,36 +143,22 @@ bool ROSControlItem::start()
 
 void ROSControlItem::input()
 {
-    
+    robotHWSim->read(ros::Time(io->currentTime()), ros::Duration(dt));
 }
 
 
 bool ROSControlItem::control()
 {
-    int last_sec = static_cast<int>(time);
-    double last_nsec = (time - last_sec) * 1e9;
-    int now_sec = static_cast<int>(io->currentTime());
-    double now_nsec = (io->currentTime() - now_sec) * 1e9;
-    
-    ros::Time last(last_sec, static_cast<int>(last_nsec));
-    ros::Time now(now_sec, static_cast<int>(now_nsec));
-    ros::Duration period = now - last;
-    
-    robotHWSim->read(now, period);
-    robotHWSim->write(now, period);
-    
-    controllerManager->update(now, period, false);
-    
-    time = io->currentTime();
-    
+    controllerManager->update(ros::Time(io->currentTime()), ros::Duration(dt), false);
     return true;
 }
 
 
 void ROSControlItem::output()
 {
-
+    robotHWSim->write(ros::Time(io->currentTime()), ros::Duration(dt));
 }
+
 
 void ROSControlItem::stop()
 {

@@ -40,7 +40,7 @@ protected:
 
 private:
     ControllerIO* io;
-    double time;
+    double dt;
 
     ros::NodeHandle nodeHandle;
 

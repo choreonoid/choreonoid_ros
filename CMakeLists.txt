@@ -36,7 +36,6 @@ find_package(choreonoid REQUIRED)
 
 set(CHOREONOID_ROS_CMAKE_CONFIG_SUBDIR share/choreonoid_ros/cmake) # ROS compliant
 
-set(CHOREONOID_ROS_INSTALL_SDK ON)
 set(CHOREONOID_ROS_SDK_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_HEADER_SUBDIR})
 set(CHOREONOID_ROS_SDK_LIBRARY_DIRS
   ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_LIB_SUBDIR} ${CMAKE_INSTALL_PREFIX}/${CHOREONOID_PLUGIN_SUBDIR})
@@ -67,9 +66,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 link_directories(${PROJECT_BINARY_DIR}/lib)
 link_directories(${PROJECT_BINARY_DIR}/${CHOREONOID_PLUGIN_SUBDIR})
 
-
 add_subdirectory(src)
-add_subdirectory(include)
 
 if(DEFINED ENV{ROS_VERSION})
   if($ENV{ROS_VERSION} EQUAL 1)
@@ -94,6 +91,5 @@ if(DEFINED ENV{ROS_VERSION})
   endif()
 endif()
 
-if(INSTALL_SDK)
-  add_subdirectory(cmake)
-endif()
+add_subdirectory(include)
+add_subdirectory(cmake)

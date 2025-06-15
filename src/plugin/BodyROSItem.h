@@ -54,7 +54,8 @@ public:
     const DeviceList<AccelerationSensor>& accelSensors() const { return accelSensors_; }
     const DeviceList<Imu>& imus() const { return imus_; }
     const DeviceList<Camera>& visionSensors() const { return visionSensors_; }
-    const DeviceList<RangeCamera>& rangeVisionSensors() const { return rangeVisionSensors_; }
+    const DeviceList<RangeCamera>& rangeVisionPointCloudSensors() const { return rangeVisionPointCloudSensors_; }
+    const DeviceList<RangeCamera>& rangeVisionDepthImageSensors() const { return rangeVisionDepthImageSensors_; }
     const DeviceList<RangeSensor>& rangeSensors() const { return rangeSensors_; }
 
     double controlTime() const { return controlTime_; }
@@ -74,7 +75,8 @@ private:
     DeviceList<AccelerationSensor> accelSensors_;
     DeviceList<Imu> imus_;
     DeviceList<Camera> visionSensors_;
-    DeviceList<RangeCamera> rangeVisionSensors_;
+    DeviceList<RangeCamera> rangeVisionPointCloudSensors_;
+    DeviceList<RangeCamera> rangeVisionDepthImageSensors_;
     DeviceList<RangeSensor> rangeSensors_;
     double timeStep_;
 
@@ -101,7 +103,9 @@ private:
     std::vector<ros::Publisher> accelSensorPublishers;
     std::vector<ros::Publisher> imuPublishers;
     std::vector<image_transport::CameraPublisher> visionSensorPublishers;
-    std::vector<ros::Publisher> rangeVisionSensorPublishers;
+    // std::vector<ros::Publisher> rangeVisionSensorPublishers;
+    std::vector<ros::Publisher> rangeVisionSensorPointCloudPublishers;
+    std::vector<image_transport::CameraPublisher> rangeVisionSensorDepthImagePublishers;
     std::vector<ros::Publisher> rangeSensorPublishers;
     std::vector<ros::Publisher> rangeSensorPcPublishers;
 
@@ -110,7 +114,8 @@ private:
     std::vector<ros::ServiceServer> accelSensorSwitchServers;
     std::vector<ros::ServiceServer> imuSwitchServers;
     std::vector<ros::ServiceServer> visionSensorSwitchServers;
-    std::vector<ros::ServiceServer> rangeVisionSensorSwitchServers;
+    std::vector<ros::ServiceServer> rangeVisionSensorPointCloudSwitchServers;
+    std::vector<ros::ServiceServer> rangeVisionSensorDepthImageSwitchServers;
     std::vector<ros::ServiceServer> rangeSensorSwitchServers;
     std::vector<ros::ServiceServer> rangeSensorPcSwitchServers;
 
@@ -123,8 +128,10 @@ private:
     void updateImu(const ImuPtr& sensor, const ros::Publisher& publisher);
     void updateVisionSensor(
         const CameraPtr& sensor, const image_transport::CameraPublisher& publisher);
-    void updateRangeVisionSensor(
+    void updateRangeVisionSensorPointCloud(
         const RangeCameraPtr& sensor, const ros::Publisher& publisher);
+    void updateRangeVisionSensorDepthImage(
+        const RangeCameraPtr& sensor, const image_transport::CameraPublisher& publisher);
     void updateRangeSensor(
         const RangeSensorPtr& sensor, const ros::Publisher& publisher);
     void update3DRangeSensor(

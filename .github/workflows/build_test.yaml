@@ -6,15 +6,21 @@ on:
 
 jobs:
   build:
-    name: build
-    runs-on: ubuntu-22.04
+    name: build (${{ matrix.ros_distro }})
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 120
     strategy:
       fail-fast: false
-    env:
-      ROS_DISTRO: humble
+      matrix:
+        include:
+          - ros_distro: humble
+            runs-on: ubuntu-22.04
+            container_image: osrf/ros:humble-desktop-jammy
+          - ros_distro: jazzy
+            runs-on: ubuntu-24.04
+            container_image: osrf/ros:jazzy-desktop-noble
     container:
-      image: osrf/ros:humble-desktop-jammy
+      image: ${{ matrix.container_image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,7 +68,7 @@ jobs:
       - name: Run build test
         uses: ros-tooling/action-ros-ci@v0.3
         with:
-          target-ros2-distro: humble
+          target-ros2-distro: ${{ matrix.ros_distro }}
           vcs-repo-file-url: dependency.repos
           extra-cmake-args: -DWITH_INTEGRATION_TEST=ON
           # If possible, pin the repository in the workflow to a specific commit to avoid

@@ -7,18 +7,18 @@ on:
 jobs:
   build:
     name: build (${{ matrix.ros_distro }})
-    runs-on: ${{ matrix.runs-on }}
+    runs-on: ubuntu-${{ matrix.ubuntu_version }}
     timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         include:
           - ros_distro: humble
-            runs-on: ubuntu-22.04
             container_image: osrf/ros:humble-desktop-jammy
+            ubuntu_version: "22.04"
           - ros_distro: jazzy
-            runs-on: ubuntu-24.04
             container_image: osrf/ros:jazzy-desktop-noble
+            ubuntu_version: "24.04"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -29,41 +29,13 @@ jobs:
 
       - name: Install dependencies of choreonoid
         run: |
-          apt-get update && \
-          apt-get -y upgrade && \
-          apt-get -y install \
-          build-essential \
-          cmake-curses-gui \
-          libboost-dev \
-          libboost-system-dev \
-          libboost-program-options-dev \
-          libboost-iostreams-dev \
-          libeigen3-dev \
-          uuid-dev \
-          libxfixes-dev \
-          libyaml-dev \
-          libfmt-dev \
-          gettext \
-          zlib1g-dev \
-          libjpeg-dev \
-          libpng-dev \
-          libfreetype-dev \
-          qtbase5-dev \
-          libqt5x11extras5-dev \
-          libqt5svg5-dev \
-          qttranslations5-l10n \
-          python3-dev \
-          python3-numpy \
-          libassimp-dev \
-          libode-dev \
-          libfcl-dev \
-          libpulse-dev \
-          libsndfile1-dev \
-          libgstreamer1.0-dev \
-          libgstreamer-plugins-base1.0-dev \
-          libzip-dev \
-          python3-colcon-coveragepy-result \
-          python3-colcon-lcov-result
+          export DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC
+          apt-get update && apt-get -y upgrade
+          script_url="https://raw.githubusercontent.com/choreonoid/choreonoid/master/misc/script/install-requisites-ubuntu-${{ matrix.ubuntu_version }}.sh"
+          curl -sL "$script_url" -o /tmp/install-deps.sh
+          sed -i 's/sudo --preserve-env=[^ ]* //' /tmp/install-deps.sh
+          sh /tmp/install-deps.sh
+          apt-get -y install python3-colcon-coveragepy-result python3-colcon-lcov-result
 
       - name: Run build test
         uses: ros-tooling/action-ros-ci@v0.3
